@@ -78,6 +78,24 @@ importers:
         specifier: ^3.23.8
         version: 3.25.76
 
+  heads/http:
+    dependencies:
+      '@thiny/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@thiny/logger-pino':
+        specifier: workspace:*
+        version: link:../../packages/adapters/logger-pino
+      '@thiny/memory-sqlite':
+        specifier: workspace:*
+        version: link:../../packages/adapters/memory-sqlite
+      '@thiny/model-aisdk':
+        specifier: workspace:*
+        version: link:../../packages/adapters/model-aisdk
+      '@thiny/plugin-web-search':
+        specifier: workspace:*
+        version: link:../../packages/plugins/web-search
+
   packages/adapters/logger-pino:
     dependencies:
       '@thiny/core':

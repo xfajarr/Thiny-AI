@@ -1,0 +1,15 @@
+{
+  "name": "@thiny/http",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "thiny-http": "./src/main.ts"
+  },
+  "dependencies": {
+    "@thiny/core": "workspace:*",
+    "@thiny/logger-pino": "workspace:*",
+    "@thiny/memory-sqlite": "workspace:*",
+    "@thiny/model-aisdk": "workspace:*",
+    "@thiny/plugin-web-search": "workspace:*"
+  }
+}
