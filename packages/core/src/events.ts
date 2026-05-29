@@ -1,3 +1,5 @@
+import type { Logger } from "./ports.js";
+
 /**
  * Events emitted by the kernel during an agent run.
  * Middleware and plugins subscribe to these via `ctx.events.on(...)`.
@@ -28,6 +30,14 @@ export class EventBus {
   private readonly handlers = new Map<KernelEvent, Set<EventHandler>>();
 
   /**
+   * @param logger - Optional logger for reporting handler errors.
+   *   When provided, handler exceptions are logged as structured errors
+   *   instead of falling back to `console.error`. Pass the agent's session
+   *   logger for full observability continuity.
+   */
+  constructor(private readonly logger?: Logger) {}
+
+  /**
    * Subscribe a handler to an event.
    * The same handler instance can be registered only once per event
    * (Set semantics — duplicates are silently ignored).
@@ -47,16 +57,31 @@ export class EventBus {
    * Emit an event to all registered handlers.
    *
    * Handlers are invoked synchronously in registration order.
-   * A throwing handler is caught, reported to `console.error`, and the
-   * remaining handlers continue executing.
+   * A throwing handler is caught, reported via the configured logger (or
+   * `console.error` as a last resort), and the remaining handlers continue.
    */
   emit(event: KernelEvent, payload: unknown): void {
     for (const handler of this.handlers.get(event) ?? []) {
       try {
         handler(payload);
       } catch (err) {
-        // Emit errors to stderr so they are visible without crashing the agent.
-        console.error(`[thiny/EventBus] handler for "${event}" threw:`, err);
+        // Handler errors must never crash the agent, but must always be visible.
+        const errMsg = err instanceof Error ? err.message : String(err);
+        const errStack = err instanceof Error ? err.stack : undefined;
+        if (this.logger) {
+          this.logger.error(
+            {
+              event: "event_handler_error",
+              kernelEvent: event,
+              errorMessage: errMsg,
+              errorStack: errStack,
+            },
+            `EventBus handler for "${event}" threw: ${errMsg}`,
+          );
+        } else {
+          // No logger configured — fall back to stderr so the error is never lost.
+          console.error(`[thiny/EventBus] handler for "${event}" threw:`, err);
+        }
       }
     }
   }

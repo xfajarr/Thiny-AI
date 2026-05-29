@@ -108,8 +108,8 @@ export async function createAgent(config: AgentConfig): Promise<Agent> {
   const registry = new ToolRegistry();
   for (const tool of config.tools ?? []) registry.register(tool);
 
-  const events = new EventBus();
   const logger = config.logger ?? fallbackLogger;
+  const events = new EventBus(logger); // pass logger so handler errors use structured logging
   const maxSteps = config.maxSteps ?? 12;
 
   const extensions = await loadPlugins(config.plugins ?? [], {

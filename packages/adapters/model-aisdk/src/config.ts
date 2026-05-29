@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { aiSdkModel, type AiSdkOptions } from "./index.js";
 import type { ModelProvider } from "@thiny/core";
 import { ENV_KEYS, readEnvKey } from "./env-keys.js";
+import { adapterLogger } from "./adapter-logger.js";
 
 /**
  * Shape of `thiny.config.json`.
@@ -88,7 +89,10 @@ export function loadThinyConfig(configPath?: string): ModelProvider {
       try {
         fileConfig = JSON.parse(readFileSync(candidatePath, "utf8")) as ThinyConfig;
         // Log which config file was found so users can confirm the right file is being used.
-        console.info(`[thiny] Using config file: ${candidatePath}`);
+        adapterLogger.info(
+          { event: "config_loaded", path: candidatePath },
+          `Using config file: ${candidatePath}`,
+        );
         break;
       } catch (err: unknown) {
         throw new Error(

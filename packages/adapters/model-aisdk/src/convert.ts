@@ -1,6 +1,7 @@
 import type { CoreMessage } from "ai";
 import { tool as aiTool } from "ai";
 import type { Message, Tool } from "@thiny/core";
+import { adapterLogger } from "./adapter-logger.js";
 
 /**
  * Attempt to parse JSON from a tool result string.
@@ -15,8 +16,9 @@ function tryParseJSON(value: string): unknown {
   } catch {
     // A tool returned something that isn't valid JSON.
     // Log it so developers notice if this is unintentional.
-    console.warn(
-      `[thiny/convert] Tool result is not valid JSON — passing raw string to model. Value starts with: "${value.slice(0, 80)}"`,
+    adapterLogger.warn(
+      { event: "tool_result_not_json", preview: value.slice(0, 80) },
+      "Tool result is not valid JSON — passing raw string to model",
     );
     return value;
   }
