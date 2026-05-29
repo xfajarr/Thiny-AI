@@ -32,12 +32,18 @@ describe("composeModel", () => {
 });
 
 describe("budgetMiddleware", () => {
-  it("throws when token cap is exceeded", async () => {
+  it("blocks the call after token cap is exceeded by previous calls", async () => {
+    // Budget enforcement on tokens works pre-call using accumulated totals:
+    // the call that first exceeds the limit is still allowed (usage is only
+    // known after completion); subsequent calls are blocked.
     const mw = budgetMiddleware({ maxTokens: 100 });
     const next = async () => ({
       finishReason: "stop" as const,
-      usage: { inputTokens: 80, outputTokens: 40 },
+      usage: { inputTokens: 80, outputTokens: 40 }, // 120 tokens total
     });
+    // First call: accumulated = 0 < 100, allowed. After: accumulated = 120.
+    await mw({ messages: [], tools: [] }, next);
+    // Second call: accumulated = 120 > 100, blocked before the call.
     await expect(mw({ messages: [], tools: [] }, next)).rejects.toThrow(/budget/i);
   });
 

@@ -65,6 +65,10 @@ export function policyMiddleware(rules: PolicyRule[]): ToolMiddleware {
     }
 
     if (decision.effect === "approve") {
+      // SECURITY: `decision.reason` is displayed to the human approver (e.g. in CLI).
+      // Policy rules MUST produce static, data-derived reason strings only —
+      // never embed model-generated text, as that would open a social-engineering
+      // vector where a model crafts tool args to manipulate the approver.
       const approved = call.ctx.approver
         ? await call.ctx.approver({
             tool: call.tool.name,

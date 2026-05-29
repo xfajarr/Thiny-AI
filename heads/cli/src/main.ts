@@ -37,8 +37,11 @@ async function main() {
     file: process.env.AUDIT_LOG,
   });
 
+  // Resolve the active model name the same way loadThinyConfig() does,
+  // so the startup banner shows what is actually being used.
+  const activeModelName =
+    process.env.THINY_MODEL ?? process.env.AGENT_MODEL ?? "openai:gpt-4o-mini";
   const model = loadThinyConfig();
-  const activeModel = process.env.THINY_MODEL ?? process.env.AGENT_MODEL ?? "openai:gpt-4o-mini";
 
   const plugins = [];
   if (process.env.BRAVE_API_KEY) {
@@ -66,7 +69,7 @@ async function main() {
   });
 
   const rl = createInterface({ input: stdin, output: stdout });
-  stdout.write(`Thiny agent ready  [model: ${activeModel}]\n`);
+  stdout.write(`Thiny agent ready  [model: ${activeModelName}]\n`);
   stdout.write("Type a message and press Enter. Ctrl+C to quit.\n\n");
 
   for (;;) {

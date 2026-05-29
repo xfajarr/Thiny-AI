@@ -82,7 +82,13 @@ export async function runLoop(
     });
 
     if (!response.toolCalls?.length) {
-      // ③ DONE — the model returned text with no tool calls
+      // ③ DONE — the model returned no tool calls.
+      // This covers three legitimate cases:
+      //   a) toolCalls is undefined (provider didn't include the field)
+      //   b) toolCalls is an empty array (provider explicitly said "no calls")
+      //   c) finishReason is "stop" — the model is satisfied with its answer
+      // In all cases, text may be an empty string — that is a valid response
+      // (e.g. the model echoed nothing). The agent caller decides what to do with it.
       const text = response.text ?? "";
       ctx.events.emit("onFinish", { step, text });
       return { text, messages };

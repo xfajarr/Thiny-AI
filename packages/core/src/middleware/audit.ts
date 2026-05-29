@@ -1,7 +1,11 @@
 import type { ModelMiddleware, ToolMiddleware } from "../middleware.js";
 import type { Logger } from "../ports.js";
 
-/** Logs every model call: latency, finish reason, token usage. */
+/**
+ * Logs every model call with latency, finish reason, tool names called, and
+ * token usage. Runs around the full middleware chain, so it includes time
+ * spent in nested middleware (e.g. budget checks).
+ */
 export function modelAuditMiddleware(logger: Logger): ModelMiddleware {
   return async (req, next) => {
     const startedAt = Date.now();
@@ -20,7 +24,12 @@ export function modelAuditMiddleware(logger: Logger): ModelMiddleware {
   };
 }
 
-/** Logs every tool call: name, latency, ok/error. */
+/**
+ * Logs every tool call with name, latency, and success/failure.
+ * On failure, logs the full error message and stack trace to aid debugging.
+ * Re-throws the error after logging so the loop's error-as-observation
+ * mechanism continues to work normally.
+ */
 export function toolAuditMiddleware(logger: Logger): ToolMiddleware {
   return async (call, next) => {
     const startedAt = Date.now();
@@ -43,7 +52,11 @@ export function toolAuditMiddleware(logger: Logger): ToolMiddleware {
           tool: call.tool.name,
           durationMs: Date.now() - startedAt,
           ok: false,
-          error: String(err),
+          // Include message and stack separately so structured log consumers
+          // can filter on message while retaining the full stack for debugging.
+          errorMessage: err instanceof Error ? err.message : String(err),
+          errorStack: err instanceof Error ? err.stack : undefined,
+          errorName: err instanceof Error ? err.name : undefined,
         },
         "tool_call_failed",
       );

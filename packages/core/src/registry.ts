@@ -33,14 +33,18 @@ export class ToolRegistry {
    * Retrieve a tool by name.
    *
    * @throws {Error} When no tool with the given name is registered.
-   *   The error lists how many tools are registered to aid debugging.
+   *   The error includes the total count of registered tools.
+   *   Tool names are intentionally omitted from the error message to avoid
+   *   leaking the agent's capability surface in multi-tenant environments.
+   *   Use `registry.all()` in your own debug tooling to inspect names.
    */
   get(name: string): Tool {
     const tool = this.map.get(name);
     if (!tool) {
       throw new Error(
         `Unknown tool: "${name}". ` +
-          `Registered tools (${String(this.map.size)}): ${[...this.map.keys()].join(", ") || "(none)"}`,
+          `${String(this.map.size)} tool(s) are registered. ` +
+          `Check that the plugin providing this tool was loaded.`,
       );
     }
     return tool;
