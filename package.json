@@ -14,6 +14,7 @@
     "cli": "node --env-file=.env --import tsx heads/cli/src/main.ts",
     "http": "node --env-file=.env --import tsx heads/http/src/main.ts",
     "create-thiny": "node --import tsx apps/create-thiny/src/index.ts",
+    "daemon": "node --env-file=.env --import tsx heads/daemon/src/main.ts",
     "lint": "eslint \"packages/**/*.ts\" \"heads/**/*.ts\" --max-warnings 0",
     "lint:fix": "eslint \"packages/**/*.ts\" \"heads/**/*.ts\" --fix",
     "format": "prettier --write .",

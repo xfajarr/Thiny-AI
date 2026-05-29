@@ -10,6 +10,7 @@
     { "path": "packages/plugins/solana" },
     { "path": "packages/agent" },
     { "path": "packages/eval" },
+    { "path": "packages/runtime" },
     { "path": "packages/plugins/web-search" }
   ]
 }
