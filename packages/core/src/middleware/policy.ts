@@ -43,48 +43,80 @@ export type PolicyRule = (
  *
  * **Rule evaluation:** rules run in array order; first non-null decision wins.
  *
+ * **Logging:** every allow, deny, and approve decision is logged to `ctx.logger`
+ * at `info` (allow) or `warn` (deny/approve-denied) level for audit purposes.
+ *
  * @param rules - Ordered array of deterministic policy rules.
  */
 export function policyMiddleware(rules: PolicyRule[]): ToolMiddleware {
   return async (call, next) => {
     // Parse args at the boundary so rules never touch raw untrusted LLM JSON.
+    // Include the actual Zod error so callers can see what was invalid.
     let validatedArgs: unknown;
     try {
       validatedArgs = call.tool.parameters.parse(call.args);
-    } catch {
-      throw new PolicyError(
-        `Invalid arguments for tool "${call.tool.name}" — Zod validation failed.`,
+    } catch (err: unknown) {
+      const detail = err instanceof Error ? err.message : String(err);
+      call.ctx.logger.warn(
+        { event: "policy_validation_failed", tool: call.tool.name, detail },
+        `Tool "${call.tool.name}" received invalid arguments`,
       );
+      throw new PolicyError(`Invalid arguments for tool "${call.tool.name}": ${detail}`, {
+        cause: err,
+      });
     }
 
     const validatedCall = { ...call, args: validatedArgs };
     const decision = evaluateRules(rules, validatedCall);
 
+    if (decision.effect === "allow") {
+      call.ctx.logger.info(
+        { event: "policy_allow", tool: call.tool.name, reason: decision.reason },
+        `Policy allowed "${call.tool.name}"`,
+      );
+      return next({ ...call, args: validatedArgs });
+    }
+
     if (decision.effect === "deny") {
+      call.ctx.logger.warn(
+        { event: "policy_deny", tool: call.tool.name, reason: decision.reason },
+        `Policy denied "${call.tool.name}": ${decision.reason}`,
+      );
       throw new PolicyError(`Policy denied "${call.tool.name}": ${decision.reason}`);
     }
 
-    if (decision.effect === "approve") {
-      // SECURITY: `decision.reason` is displayed to the human approver (e.g. in CLI).
-      // Policy rules MUST produce static, data-derived reason strings only —
-      // never embed model-generated text, as that would open a social-engineering
-      // vector where a model crafts tool args to manipulate the approver.
-      const approved = call.ctx.approver
-        ? await call.ctx.approver({
-            tool: call.tool.name,
-            args: validatedArgs,
-            reason: decision.reason,
-          })
-        : false;
-      if (!approved) {
-        throw new PolicyError(
-          `Approval required for "${call.tool.name}" but was not granted. Reason: ${decision.reason}`,
-        );
-      }
+    // effect === "approve"
+    call.ctx.logger.info(
+      { event: "policy_approval_requested", tool: call.tool.name, reason: decision.reason },
+      `Approval requested for "${call.tool.name}"`,
+    );
+
+    // SECURITY: `decision.reason` is displayed to the human approver (e.g. in CLI).
+    // Policy rules MUST produce static, data-derived reason strings only —
+    // never embed model-generated text, as that would open a social-engineering
+    // vector where a model crafts tool args to manipulate the approver.
+    const approved = call.ctx.approver
+      ? await call.ctx.approver({
+          tool: call.tool.name,
+          args: validatedArgs,
+          reason: decision.reason,
+        })
+      : false;
+
+    if (!approved) {
+      call.ctx.logger.warn(
+        { event: "policy_approval_denied", tool: call.tool.name, reason: decision.reason },
+        `Approval denied for "${call.tool.name}"`,
+      );
+      throw new PolicyError(
+        `Approval required for "${call.tool.name}" but was not granted. Reason: ${decision.reason}`,
+      );
     }
 
-    // Pass validated args downstream — subsequent middleware and the tool handler
-    // receive the Zod-parsed, type-safe value.
+    call.ctx.logger.info(
+      { event: "policy_approved", tool: call.tool.name, reason: decision.reason },
+      `Approval granted for "${call.tool.name}"`,
+    );
     return next({ ...call, args: validatedArgs });
   };
 }

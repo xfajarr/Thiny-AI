@@ -37,6 +37,17 @@ interface BraveSearchResponse {
  * });
  * ```
  */
+
+/** Map common Brave Search HTTP error codes to actionable messages. */
+function describeHttpError(status: number): string {
+  if (status === 401) return "Authentication failed — verify your BRAVE_API_KEY is correct.";
+  if (status === 403) return "Access forbidden — check your API subscription level.";
+  if (status === 422) return "Invalid query — the search request was malformed.";
+  if (status === 429) return "Rate limit exceeded — slow down requests or upgrade your plan.";
+  if (status >= 500) return "Brave Search server error — try again later.";
+  return `Unexpected error — see Brave Search API docs for HTTP ${String(status)}.`;
+}
+
 export function webSearchPlugin(opts: WebSearchOptions): Plugin {
   if (!opts.apiKey.trim()) {
     throw new Error(
@@ -77,8 +88,7 @@ export function webSearchPlugin(opts: WebSearchOptions): Plugin {
 
           if (!response.ok) {
             throw new Error(
-              `web_search failed: HTTP ${String(response.status)} from Brave Search API. ` +
-                `Check your API key and quota.`,
+              `web_search failed: HTTP ${String(response.status)} — ${describeHttpError(response.status)}`,
             );
           }
 

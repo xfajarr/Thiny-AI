@@ -87,6 +87,8 @@ export function loadThinyConfig(configPath?: string): ModelProvider {
     if (existsSync(candidatePath)) {
       try {
         fileConfig = JSON.parse(readFileSync(candidatePath, "utf8")) as ThinyConfig;
+        // Log which config file was found so users can confirm the right file is being used.
+        console.info(`[thiny] Using config file: ${candidatePath}`);
         break;
       } catch (err: unknown) {
         throw new Error(

@@ -1,4 +1,5 @@
 import type { ModelMiddleware } from "../middleware.js";
+import type { Logger } from "../ports.js";
 import { BudgetError } from "../errors.js";
 
 /** Configuration for the token/call budget circuit breaker. */
@@ -19,6 +20,16 @@ export interface BudgetOptions {
    * Must be a positive integer. Checked before each call.
    */
   maxCalls?: number;
+  /**
+   * Logger for budget warnings and status. When provided, a warning is emitted
+   * when accumulated usage reaches `warnAtFraction` of the configured limit.
+   */
+  logger?: Logger;
+  /**
+   * Fraction of the budget at which to emit a warning log (0–1).
+   * Default: `0.8` (warn at 80% of budget).
+   */
+  warnAtFraction?: number;
 }
 
 /**
@@ -37,7 +48,9 @@ export interface BudgetOptions {
  * ```ts
  * plugins: [{
  *   name: "safety",
- *   modelMiddleware: [budgetMiddleware({ maxCalls: 20, maxTokens: 100_000 })],
+ *   modelMiddleware: [
+ *     budgetMiddleware({ maxCalls: 20, maxTokens: 100_000, logger }),
+ *   ],
  * }]
  * ```
  */
@@ -53,11 +66,14 @@ export function budgetMiddleware(opts: BudgetOptions): ModelMiddleware {
     );
   }
 
+  const warnAt = opts.warnAtFraction ?? 0.8;
   let totalTokens = 0;
   let totalCalls = 0;
+  let tokenWarnEmitted = false;
+  let callWarnEmitted = false;
 
   return async (req, next) => {
-    // Pre-call checks — block before making the call
+    // Pre-call checks — block before making the call.
     if (opts.maxCalls !== undefined && totalCalls >= opts.maxCalls) {
       throw new BudgetError(
         `Budget exceeded: ${String(totalCalls)} model calls reached the limit of ${String(opts.maxCalls)}.`,
@@ -67,6 +83,40 @@ export function budgetMiddleware(opts: BudgetOptions): ModelMiddleware {
       throw new BudgetError(
         `Budget exceeded: ${String(totalTokens)} tokens used from previous calls, limit is ${String(opts.maxTokens)}.`,
       );
+    }
+
+    // Warn when approaching limits (emitted once per run, not on every call).
+    if (opts.logger) {
+      if (opts.maxCalls !== undefined && !callWarnEmitted && totalCalls / opts.maxCalls >= warnAt) {
+        opts.logger.warn(
+          {
+            event: "budget_warning",
+            kind: "calls",
+            used: totalCalls,
+            limit: opts.maxCalls,
+            pct: Math.round((totalCalls / opts.maxCalls) * 100),
+          },
+          `Budget warning: ${String(totalCalls)}/${String(opts.maxCalls)} model calls used`,
+        );
+        callWarnEmitted = true;
+      }
+      if (
+        opts.maxTokens !== undefined &&
+        !tokenWarnEmitted &&
+        totalTokens / opts.maxTokens >= warnAt
+      ) {
+        opts.logger.warn(
+          {
+            event: "budget_warning",
+            kind: "tokens",
+            used: totalTokens,
+            limit: opts.maxTokens,
+            pct: Math.round((totalTokens / opts.maxTokens) * 100),
+          },
+          `Budget warning: ${String(totalTokens)}/${String(opts.maxTokens)} tokens used`,
+        );
+        tokenWarnEmitted = true;
+      }
     }
 
     totalCalls++;

@@ -2,11 +2,22 @@ import type { CoreMessage } from "ai";
 import { tool as aiTool } from "ai";
 import type { Message, Tool } from "@thiny/core";
 
-/** Attempt to parse JSON; return the raw string if parsing fails. */
+/**
+ * Attempt to parse JSON from a tool result string.
+ * Returns the parsed value on success.
+ * If parsing fails, returns the raw string and emits a console warning —
+ * this typically means a tool returned a non-JSON string, which is unusual
+ * but not fatal (the model will see the raw string as the result).
+ */
 function tryParseJSON(value: string): unknown {
   try {
     return JSON.parse(value);
   } catch {
+    // A tool returned something that isn't valid JSON.
+    // Log it so developers notice if this is unintentional.
+    console.warn(
+      `[thiny/convert] Tool result is not valid JSON — passing raw string to model. Value starts with: "${value.slice(0, 80)}"`,
+    );
     return value;
   }
 }

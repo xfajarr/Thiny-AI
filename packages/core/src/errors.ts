@@ -23,8 +23,8 @@ export class MaxStepsError extends Error {
  * acknowledge the denial and adjust its behaviour.
  */
 export class PolicyError extends Error {
-  constructor(message: string) {
-    super(message);
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
     this.name = "PolicyError";
   }
 }
@@ -36,8 +36,8 @@ export class PolicyError extends Error {
  * feeding it back to the model as an observation.
  */
 export class BudgetError extends Error {
-  constructor(message: string) {
-    super(message);
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
     this.name = "BudgetError";
   }
 }

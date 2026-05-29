@@ -15,30 +15,32 @@ import { systemMessage } from "./domain/messages.js";
 
 /**
  * In-memory session storage. Each `append` call overwrites the full
- * transcript for the given session (UPSERT semantics) — it does not
- * incrementally add messages. This keeps the implementation trivial
- * and matches the behaviour of the upcoming SQLite adapter.
+ * transcript for the given session (UPSERT semantics).
+ * Matches the behaviour of the upcoming SQLite adapter.
  */
 class EphemeralMemory implements MemoryBackend {
-  private store = new Map<string, Message[]>();
+  private readonly store = new Map<string, Message[]>();
+
   load(sessionId: string): Promise<Message[]> {
     return Promise.resolve([...(this.store.get(sessionId) ?? [])]);
   }
+
   append(sessionId: string, messages: Message[]): Promise<void> {
     this.store.set(sessionId, messages);
     return Promise.resolve();
   }
 }
 
+/** Fallback logger that writes to stderr. Swap for `pinoLogger()` in production. */
 const fallbackLogger: Logger = {
-  info: (o, m) => {
-    console.log("[info]", m ?? "", o);
+  info: (obj, msg) => {
+    console.log("[info]", msg ?? "", obj);
   },
-  warn: (o, m) => {
-    console.warn("[warn]", m ?? "", o);
+  warn: (obj, msg) => {
+    console.warn("[warn]", msg ?? "", obj);
   },
-  error: (o, m) => {
-    console.error("[error]", m ?? "", o);
+  error: (obj, msg) => {
+    console.error("[error]", msg ?? "", obj);
   },
   child: () => fallbackLogger,
 };
@@ -75,25 +77,22 @@ export interface Agent {
   /**
    * Run the agent with the given input and return its final text response.
    *
-   * @param input      - The user's message for this turn.
+   * @param input          - The user's message for this turn.
    * @param opts.sessionId - Session to load history from and persist to. Default: `"default"`.
-   * @param opts.onToken  - Called for each text delta when streaming is available.
+   * @param opts.onToken   - Called for each text delta when streaming is available.
    */
   run(
     input: string,
     opts?: { sessionId?: string; onToken?: (delta: string) => void },
   ): Promise<string>;
-  /** The tool registry for this agent. Inspect registered tools or add programmatically after creation. */
+  /** The tool registry for this agent. */
   registry: ToolRegistry;
-  /** The event bus for this agent. Subscribe to lifecycle events for custom observability. */
+  /** The event bus for this agent. Subscribe to lifecycle events for observability. */
   events: EventBus;
 }
 
 /**
  * Create and initialise an agent from the given configuration.
- *
- * Loads all plugins (two-phase: register then setup), composes middleware,
- * and wires the spawn function. The returned `Agent` is ready to use immediately.
  *
  * @example
  * ```ts
@@ -107,13 +106,15 @@ export interface Agent {
  */
 export async function createAgent(config: AgentConfig): Promise<Agent> {
   const registry = new ToolRegistry();
-  for (const t of config.tools ?? []) registry.register(t);
+  for (const tool of config.tools ?? []) registry.register(tool);
 
   const events = new EventBus();
   const logger = config.logger ?? fallbackLogger;
+  const maxSteps = config.maxSteps ?? 12;
 
-  const collected = await loadPlugins(config.plugins ?? [], {
+  const extensions = await loadPlugins(config.plugins ?? [], {
     registry,
+    logger,
     makeSetupCtx: () =>
       ({
         sessionId: "setup",
@@ -125,33 +126,38 @@ export async function createAgent(config: AgentConfig): Promise<Agent> {
         state: new Map(),
         signer: config.signer,
         approver: config.approver,
-        maxSteps: config.maxSteps ?? 12,
+        maxSteps,
       }) satisfies Ctx,
   });
 
-  const memory = collected.memory ?? config.memory ?? new EphemeralMemory();
+  const memory = extensions.memory ?? config.memory ?? new EphemeralMemory();
 
   async function run(
     input: string,
     opts: { sessionId?: string; onToken?: (delta: string) => void } = {},
   ): Promise<string> {
     const sessionId = opts.sessionId ?? "default";
+    const sessionLogger = logger.child({ sessionId });
+    const sessionStartedAt = Date.now();
+
+    sessionLogger.info(
+      { event: "session_start", sessionId, inputLength: input.length },
+      `Session "${sessionId}" started`,
+    );
+
     const ctx: Ctx = {
       sessionId,
       model: config.model,
       memory,
       tools: registry,
       events,
-      logger: logger.child({ sessionId }),
+      logger: sessionLogger,
       state: new Map(),
       signer: config.signer,
       approver: config.approver,
-      maxSteps: config.maxSteps ?? 12,
+      maxSteps,
     };
-    ctx.spawn = makeSpawn(
-      { model: config.model, events, logger: ctx.logger },
-      { maxSteps: ctx.maxSteps },
-    );
+    ctx.spawn = makeSpawn({ model: config.model, events, logger: sessionLogger }, { maxSteps });
 
     const history = await memory.load(sessionId);
     const seed: Message[] =
@@ -159,34 +165,50 @@ export async function createAgent(config: AgentConfig): Promise<Agent> {
         ? [systemMessage(config.systemPrompt), ...history]
         : history;
 
-    // Composed model generate — streaming path sits inside middleware so all gates apply.
-    const generate = composeModel(collected.middleware.model, async (req) => {
+    const generate = composeModel(extensions.middleware.model, async (req) => {
       if (opts.onToken && config.model.stream) {
         return assembleStream(config.model.stream(req.messages, req.tools), opts.onToken);
       }
       return config.model.generate(req.messages, req.tools);
     });
 
-    // Composed tool runner — policy / approval / audit all apply here.
-    const runTool = composeTool(collected.middleware.tool, async ({ tool, args, ctx: c }) => {
-      // args are already Zod-parsed by the policy middleware at this point.
-      // Re-parse as defense-in-depth (Zod parse on already-parsed data is cheap).
-      const parsed = tool.parameters.parse(args);
-      return tool.execute(parsed, c);
-    });
+    const runComposedTool = composeTool(
+      extensions.middleware.tool,
+      async ({ tool, args, ctx: c }) => {
+        const parsed = tool.parameters.parse(args);
+        return tool.execute(parsed, c);
+      },
+    );
 
     const { text, messages } = await runLoop(input, ctx, {
       seed,
       generate: (msgs, tools) => generate({ messages: msgs, tools }),
       runTool: async (tool, args, c) => {
-        const result = await runTool({ tool, args, ctx: c });
+        const result = await runComposedTool({ tool, args, ctx: c });
         return JSON.stringify(result ?? null);
       },
     });
 
-    // Persist the full transcript — including all intermediate tool calls and
-    // results — so the agent retains complete context across restarts.
+    if (!text) {
+      sessionLogger.warn(
+        { event: "session_empty_response", sessionId },
+        `Session "${sessionId}" produced an empty response`,
+      );
+    }
+
     await memory.append(sessionId, messages);
+
+    const durationMs = Date.now() - sessionStartedAt;
+    sessionLogger.info(
+      {
+        event: "session_end",
+        sessionId,
+        durationMs,
+        toolCallCount: messages.filter((m) => m.role === "tool").length,
+        responseLength: text.length,
+      },
+      `Session "${sessionId}" completed in ${String(durationMs)}ms`,
+    );
 
     return text;
   }

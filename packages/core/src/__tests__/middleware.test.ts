@@ -60,7 +60,17 @@ describe("budgetMiddleware", () => {
 });
 
 describe("policyMiddleware", () => {
-  const noApproverCtx = { approver: undefined } as unknown as Ctx;
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  const noop = (): void => {};
+  const silentLogger = {
+    info: noop,
+    warn: noop,
+    error: noop,
+    child() {
+      return silentLogger;
+    },
+  };
+  const noApproverCtx = { approver: undefined, logger: silentLogger } as unknown as Ctx;
 
   it("allows non-sensitive tools by default", async () => {
     const run = policyMiddleware([]);
@@ -109,6 +119,7 @@ describe("policyMiddleware", () => {
 
     const mockApproverCtx = {
       approver: () => Promise.resolve(true),
+      logger: silentLogger,
     } as unknown as Ctx;
 
     const result = await run(
@@ -160,6 +171,7 @@ describe("policyMiddleware", () => {
 
     const mockApproverCtx = {
       approver: () => Promise.resolve(true),
+      logger: silentLogger,
     } as unknown as Ctx;
 
     // Below cap — allow

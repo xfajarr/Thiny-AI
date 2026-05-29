@@ -6,6 +6,17 @@ import { defineTool } from "../tool.js";
 import type { Ctx } from "../context.js";
 import type { ModelMiddleware, ToolMiddleware } from "../middleware.js";
 
+// eslint-disable-next-line @typescript-eslint/no-empty-function
+const noop = (): void => {};
+const silentLogger = {
+  info: noop,
+  warn: noop,
+  error: noop,
+  child() {
+    return silentLogger;
+  },
+};
+
 describe("loadPlugins", () => {
   it("registers tools then runs setup in two phases", async () => {
     const order: string[] = [];
@@ -43,6 +54,7 @@ describe("loadPlugins", () => {
     const collected = await loadPlugins([a, b], {
       registry,
       makeSetupCtx: () => ({ tools: registry }) as unknown as Ctx,
+      logger: silentLogger,
     });
     expect(
       registry
@@ -66,6 +78,7 @@ describe("loadPlugins", () => {
     const collected = await loadPlugins([plugin], {
       registry,
       makeSetupCtx: () => ({ tools: registry }) as unknown as Ctx,
+      logger: silentLogger,
     });
     expect(collected.middleware.model).toHaveLength(1);
     expect(collected.middleware.tool).toHaveLength(1);
@@ -83,6 +96,7 @@ describe("loadPlugins", () => {
       {
         registry,
         makeSetupCtx: () => ({ tools: registry }) as unknown as Ctx,
+        logger: silentLogger,
       },
     );
     expect(collected.memory).toBe(mem2); // last wins
@@ -93,6 +107,7 @@ describe("loadPlugins", () => {
     const collected = await loadPlugins([{ name: "minimal" }], {
       registry,
       makeSetupCtx: () => ({ tools: registry }) as unknown as Ctx,
+      logger: silentLogger,
     });
     expect(registry.all()).toHaveLength(0);
     expect(collected.middleware.model).toHaveLength(0);
@@ -115,6 +130,7 @@ describe("loadPlugins", () => {
         {
           registry,
           makeSetupCtx: () => ({ tools: registry }) as unknown as Ctx,
+          logger: silentLogger,
         },
       ),
     ).rejects.toThrow(/already registered/);

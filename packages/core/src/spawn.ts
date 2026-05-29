@@ -64,11 +64,21 @@ export function makeSpawn(
   function createSpawnAtDepth(currentDepth: number): Spawn {
     return async (opts: SpawnOptions): Promise<string> => {
       if (currentDepth >= maxSpawnDepth) {
+        deps.logger.error(
+          { event: "spawn_depth_exceeded", depth: currentDepth, limit: maxSpawnDepth },
+          `Spawn depth limit of ${String(maxSpawnDepth)} exceeded`,
+        );
         throw new RangeError(
           `Spawn depth limit of ${String(maxSpawnDepth)} exceeded. ` +
             `Check for recursive spawn calls in your tools or plugins.`,
         );
       }
+
+      const spawnLogger = deps.logger.child({ spawnDepth: currentDepth });
+      spawnLogger.info(
+        { event: "spawn_start", depth: currentDepth, inputLength: opts.input.length },
+        `Spawning child agent at depth ${String(currentDepth)}`,
+      );
 
       const registry = new ToolRegistry();
       for (const tool of opts.tools ?? []) registry.register(tool);
@@ -79,14 +89,25 @@ export function makeSpawn(
         memory: ephemeralMemory(),
         tools: registry,
         events: deps.events,
-        logger: deps.logger.child({ spawnDepth: currentDepth }),
+        logger: spawnLogger,
         state: new Map(),
         maxSteps: opts.maxSteps ?? defaults.maxSteps,
         spawn: createSpawnAtDepth(currentDepth + 1),
       };
 
       const seed: Message[] = opts.systemPrompt ? [systemMessage(opts.systemPrompt)] : [];
+      const startedAt = Date.now();
       const { text } = await runLoop(opts.input, ctx, { seed });
+
+      spawnLogger.info(
+        {
+          event: "spawn_end",
+          depth: currentDepth,
+          durationMs: Date.now() - startedAt,
+          responseLength: text.length,
+        },
+        `Child agent at depth ${String(currentDepth)} completed`,
+      );
       return text;
     };
   }
