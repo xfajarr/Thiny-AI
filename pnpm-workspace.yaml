@@ -4,3 +4,4 @@ packages:
   - "packages/plugins/*"
   - "heads/*"
   - "apps/*"
+  - "apps/create-thiny"

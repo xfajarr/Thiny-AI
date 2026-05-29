@@ -1,0 +1,11 @@
+{
+  "name": "create-thiny",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "create-thiny": "./src/index.ts"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  }
+}
