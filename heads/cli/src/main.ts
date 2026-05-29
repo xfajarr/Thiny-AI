@@ -5,7 +5,7 @@
  * Zero code changes needed to switch models or providers.
  *
  * Usage:
- *   pnpm cli                              # reads thiny.config.json + .env
+ *   pnpm cli
  *   THINY_MODEL=anthropic:claude-haiku-4-5-20251001 pnpm cli
  *   THINY_MODEL=openai-compat:llama3 THINY_OPENAI_BASE_URL=http://localhost:11434/v1 pnpm cli
  */
@@ -14,6 +14,7 @@ import { stdin, stdout } from "node:process";
 import { z } from "zod";
 import { createAgent, defineTool, modelAudit, toolAudit, budgetMiddleware } from "@thiny/core";
 import { loadThinyConfig } from "@thiny/model-aisdk";
+import { pinoLogger } from "@thiny/logger-pino";
 import { webSearchPlugin } from "@thiny/plugin-web-search";
 
 const echoTool = defineTool({
@@ -23,24 +24,14 @@ const echoTool = defineTool({
   execute: ({ text }) => Promise.resolve({ echoed: text }),
 });
 
-const logger = {
-  info: (_o: unknown, _m?: string) => {
-    /* silent in production — swap for pino */
-  },
-  warn: (_o: unknown, m?: string) => {
-    console.error("[warn]", m);
-  },
-  error: (_o: unknown, m?: string) => {
-    console.error("[error]", m);
-  },
-  child() {
-    return logger;
-  },
-};
-
 async function main() {
-  const model = loadThinyConfig();
+  const logger = pinoLogger({
+    level: process.env.LOG_LEVEL ?? "info",
+    // Write structured audit log to file when AUDIT_LOG is set, e.g. AUDIT_LOG=audit.log
+    file: process.env.AUDIT_LOG,
+  });
 
+  const model = loadThinyConfig();
   const activeModel = process.env.THINY_MODEL ?? process.env.AGENT_MODEL ?? "openai:gpt-4o-mini";
 
   const plugins = [];
@@ -50,6 +41,7 @@ async function main() {
 
   const agent = await createAgent({
     model,
+    logger,
     systemPrompt:
       "You are a helpful CLI assistant. Use tools when they help you answer better. " +
       "Be concise.",
