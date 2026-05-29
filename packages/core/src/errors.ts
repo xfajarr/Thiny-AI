@@ -1,6 +1,6 @@
 export class MaxStepsError extends Error {
   constructor(public steps: number) {
-    super(`max steps exceeded: ${steps}`);
+    super(`max steps exceeded: ${String(steps)}`);
     this.name = "MaxStepsError";
   }
 }

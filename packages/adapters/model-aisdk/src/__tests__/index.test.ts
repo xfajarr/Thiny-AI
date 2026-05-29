@@ -1,10 +1,10 @@
 import { describe, it, expect } from "vitest";
+import type { LanguageModel } from "ai";
 import { aiSdkModel } from "../index.js";
 
 describe("aiSdkModel — model string resolution", () => {
   it("accepts a pre-built LanguageModel instance without resolving", () => {
-    const fakeModel = { modelId: "fake" } as never;
-    // Should not throw — bypasses string resolution entirely
+    const fakeModel: LanguageModel = { modelId: "fake", specificationVersion: "v1", provider: "test", defaultObjectGenerationMode: undefined, modelId: "fake" } as unknown as LanguageModel;
     expect(() => aiSdkModel({ model: fakeModel })).not.toThrow();
   });
 

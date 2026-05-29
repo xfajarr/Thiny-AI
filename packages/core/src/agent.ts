@@ -15,18 +15,19 @@ import { systemMessage } from "./domain/messages.js";
 
 class EphemeralMemory implements MemoryBackend {
   private store = new Map<string, Message[]>();
-  async load(sessionId: string): Promise<Message[]> {
-    return [...(this.store.get(sessionId) ?? [])];
+  load(sessionId: string): Promise<Message[]> {
+    return Promise.resolve([...(this.store.get(sessionId) ?? [])]);
   }
-  async append(sessionId: string, messages: Message[]): Promise<void> {
+  append(sessionId: string, messages: Message[]): Promise<void> {
     this.store.set(sessionId, messages);
+    return Promise.resolve();
   }
 }
 
 const consoleLogger: Logger = {
-  info:  (o, m) => console.error("[info]",  m ?? "", o),
-  warn:  (o, m) => console.error("[warn]",  m ?? "", o),
-  error: (o, m) => console.error("[error]", m ?? "", o),
+  info:  (o, m) => { console.error("[info]",  m ?? "", o); },
+  warn:  (o, m) => { console.error("[warn]",  m ?? "", o); },
+  error: (o, m) => { console.error("[error]", m ?? "", o); },
   child: () => consoleLogger,
 };
 

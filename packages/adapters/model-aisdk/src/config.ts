@@ -1,7 +1,6 @@
 import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { aiSdkModel, type AiSdkOptions } from "./index.js";
-import { modelFromEnv } from "./env.js";
 import type { ModelProvider } from "@thiny/core";
 
 /**
@@ -88,27 +87,30 @@ export function loadThinyConfig(configPath?: string): ModelProvider {
       try {
         fileConfig = JSON.parse(readFileSync(p, "utf8")) as ThinyConfig;
         break;
-      } catch (err) {
-        throw new Error(`failed to parse Thiny config at ${p}: ${err instanceof Error ? err.message : String(err)}`);
+      } catch (err: unknown) {
+        throw new Error(
+          `failed to parse Thiny config at ${p}: ${err instanceof Error ? err.message : String(err)}`,
+          { cause: err },
+        );
       }
     }
   }
 
   // 2. Env vars override config file (same priority as modelFromEnv)
   const model =
-    process.env["THINY_MODEL"] ??
-    process.env["AGENT_MODEL"] ??
+    process.env.THINY_MODEL ??
+    process.env.AGENT_MODEL ??
     fileConfig.model ??
     "openai:gpt-4o-mini";
 
   // Merge: env wins, then config file, then nothing
   const openaiEnv = {
-    baseURL: process.env["THINY_OPENAI_BASE_URL"] ?? process.env["OPENAI_BASE_URL"],
-    apiKey:  process.env["THINY_OPENAI_API_KEY"]  ?? process.env["OPENAI_API_KEY"],
+    baseURL: process.env.THINY_OPENAI_BASE_URL ?? process.env.OPENAI_BASE_URL,
+    apiKey:  process.env.THINY_OPENAI_API_KEY  ?? process.env.OPENAI_API_KEY,
   };
   const anthropicEnv = {
-    baseURL: process.env["THINY_ANTHROPIC_BASE_URL"] ?? process.env["ANTHROPIC_BASE_URL"],
-    apiKey:  process.env["THINY_ANTHROPIC_API_KEY"]  ?? process.env["ANTHROPIC_API_KEY"],
+    baseURL: process.env.THINY_ANTHROPIC_BASE_URL ?? process.env.ANTHROPIC_BASE_URL,
+    apiKey:  process.env.THINY_ANTHROPIC_API_KEY  ?? process.env.ANTHROPIC_API_KEY,
   };
 
   const openaiFile    = resolveSection(fileConfig.openai);

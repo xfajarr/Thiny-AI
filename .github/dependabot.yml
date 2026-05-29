@@ -1,0 +1,22 @@
+version: 2
+
+updates:
+  # Keep GitHub Actions up to date
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "chore(ci)"
+
+  # Keep npm dependencies up to date
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "chore(deps)"
+    # Only open PRs for direct dependencies, not transitive
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-patch"]

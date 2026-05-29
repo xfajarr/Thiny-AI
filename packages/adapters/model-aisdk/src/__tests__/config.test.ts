@@ -19,20 +19,20 @@ describe("loadThinyConfig", () => {
   });
 
   it("resolves env: references in apiKey", () => {
-    process.env["_THINY_TEST_KEY"] = "resolved-key";
+    process.env._THINY_TEST_KEY = "resolved-key";
     writeFileSync(TMP, JSON.stringify({
       model: "openai:gpt-4o-mini",
       openai: { apiKey: "env:_THINY_TEST_KEY" },
     }));
     expect(() => loadThinyConfig(TMP)).not.toThrow();
-    delete process.env["_THINY_TEST_KEY"];
+    delete process.env._THINY_TEST_KEY;
   });
 
   it("env var THINY_MODEL overrides config file model", () => {
     writeFileSync(TMP, JSON.stringify({ model: "anthropic:claude-haiku-4-5-20251001" }));
-    process.env["THINY_MODEL"] = "openai:gpt-4o";
+    process.env.THINY_MODEL = "openai:gpt-4o";
     expect(() => loadThinyConfig(TMP)).not.toThrow();
-    delete process.env["THINY_MODEL"];
+    delete process.env.THINY_MODEL;
   });
 
   it("throws a clear error for malformed JSON", () => {

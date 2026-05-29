@@ -31,14 +31,14 @@ import type { ModelProvider } from "@thiny/core";
  */
 export function modelFromEnv(env: NodeJS.ProcessEnv = process.env): ModelProvider {
   const model =
-    env["THINY_MODEL"] ??
-    env["AGENT_MODEL"] ??
+    env.THINY_MODEL ??
+    env.AGENT_MODEL ??
     "openai:gpt-4o-mini";
 
-  const openaiBaseURL  = env["THINY_OPENAI_BASE_URL"]      ?? env["OPENAI_BASE_URL"];
-  const openaiApiKey   = env["THINY_OPENAI_API_KEY"]        ?? env["OPENAI_API_KEY"];
-  const anthropicBaseURL = env["THINY_ANTHROPIC_BASE_URL"]  ?? env["ANTHROPIC_BASE_URL"];
-  const anthropicApiKey  = env["THINY_ANTHROPIC_API_KEY"]   ?? env["ANTHROPIC_API_KEY"];
+  const openaiBaseURL  = env.THINY_OPENAI_BASE_URL      ?? env.OPENAI_BASE_URL;
+  const openaiApiKey   = env.THINY_OPENAI_API_KEY        ?? env.OPENAI_API_KEY;
+  const anthropicBaseURL = env.THINY_ANTHROPIC_BASE_URL  ?? env.ANTHROPIC_BASE_URL;
+  const anthropicApiKey  = env.THINY_ANTHROPIC_API_KEY   ?? env.ANTHROPIC_API_KEY;
 
   const opts: AiSdkOptions = { model };
   if (openaiBaseURL || openaiApiKey)       opts.openai    = { baseURL: openaiBaseURL, apiKey: openaiApiKey };

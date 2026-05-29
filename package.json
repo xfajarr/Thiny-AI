@@ -3,7 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
@@ -11,12 +13,17 @@
     "typecheck": "tsc -b && tsc -b --clean",
     "cli": "node --env-file=.env --import tsx heads/cli/src/main.ts",
     "create-thiny": "node --import tsx apps/create-thiny/src/index.ts",
-    "lint": "tsc -b --noEmit"
+    "lint": "eslint \"packages/**/*.ts\" \"heads/**/*.ts\" --max-warnings 0",
+    "lint:fix": "eslint \"packages/**/*.ts\" \"heads/**/*.ts\" --fix"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/node": "^20.14.0",
+    "eslint": "^10.4.0",
+    "globals": "^17.6.0",
     "tsx": "^4.16.0",
     "typescript": "^5.5.0",
+    "typescript-eslint": "^8.60.0",
     "vitest": "^1.6.0"
   },
   "packageManager": "pnpm@9.6.0"

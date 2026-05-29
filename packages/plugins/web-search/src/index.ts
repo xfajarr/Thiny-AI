@@ -43,14 +43,14 @@ export function webSearchPlugin(opts: WebSearchOptions): Plugin {
           count: z.number().int().min(1).max(10).default(5).describe("number of results"),
         }),
         execute: async ({ query, count }) => {
-          const url = `${endpoint}?q=${encodeURIComponent(query)}&count=${count}`;
+          const url = `${endpoint}?q=${encodeURIComponent(query)}&count=${String(count)}`;
           const res = await doFetch(url, {
             headers: {
               Accept: "application/json",
               "X-Subscription-Token": opts.apiKey,
             },
           });
-          if (!res.ok) throw new Error(`web_search failed: HTTP ${res.status}`);
+          if (!res.ok) throw new Error(`web_search failed: HTTP ${String(res.status)}`);
           const data = (await res.json()) as BraveResponse;
           return {
             results: (data.web?.results ?? []).map((r) => ({

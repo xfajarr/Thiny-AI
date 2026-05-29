@@ -22,7 +22,10 @@ interface SpawnDeps {
 }
 
 function ephemeral(): MemoryBackend {
-  return { load: async () => [], append: async () => {} };
+  return {
+    load: () => Promise.resolve([]),
+    append: () => Promise.resolve(),
+  };
 }
 
 /** Create a spawn function that runs scoped child agents sharing model/events/logger. */

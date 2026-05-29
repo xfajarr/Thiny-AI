@@ -1,7 +1,7 @@
 import type { Approver } from "./ports.js";
 
 /** Safe default for headless/autonomous mode — never approve a sensitive tool. */
-export const denyApprover: Approver = async () => false;
+export const denyApprover: Approver = () => Promise.resolve(false);
 
 /**
  * Approve only tools whose names are explicitly allowlisted.
@@ -9,5 +9,5 @@ export const denyApprover: Approver = async () => false;
  */
 export function autoApprover(allowTools: string[]): Approver {
   const allow = new Set(allowTools);
-  return async (req) => allow.has(req.tool);
+  return (req) => Promise.resolve(allow.has(req.tool));
 }

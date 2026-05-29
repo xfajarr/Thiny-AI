@@ -94,18 +94,22 @@ export function aiSdkModel(opts: AiSdkOptions): ModelProvider {
       const result = await generateText({
         model,
         messages:   toCoreMessages(messages),
-        tools:      tools.length ? toAiTools(tools) : undefined,
-        toolChoice: tools.length ? "auto"           : undefined,
+         
+        tools:      tools.length !== 0 ? toAiTools(tools) : undefined,
+         
+        toolChoice: tools.length !== 0 ? "auto"           : undefined,
         maxRetries: opts.maxRetries ?? 2,
       });
       return {
         text: result.text || undefined,
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         toolCalls: result.toolCalls?.map((tc) => ({
           id:   tc.toolCallId,
           name: tc.toolName,
-          args: tc.args,
+          args: tc.args as Record<string, unknown>,
         })),
         finishReason: mapFinish(result.finishReason),
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         usage: result.usage
           ? { inputTokens: result.usage.promptTokens, outputTokens: result.usage.completionTokens }
           : undefined,
@@ -116,19 +120,22 @@ export function aiSdkModel(opts: AiSdkOptions): ModelProvider {
       const result = streamText({
         model,
         messages:   toCoreMessages(messages),
-        tools:      tools.length ? toAiTools(tools) : undefined,
-        toolChoice: tools.length ? "auto"           : undefined,
+         
+        tools:      tools.length !== 0 ? toAiTools(tools) : undefined,
+         
+        toolChoice: tools.length !== 0 ? "auto"           : undefined,
         maxRetries: opts.maxRetries ?? 2,
       });
       for await (const part of result.fullStream) {
         if (part.type === "text-delta") {
           yield { type: "text-delta", text: part.textDelta };
         } else if (part.type === "tool-call") {
-          yield { type: "tool-call", toolCall: { id: part.toolCallId, name: part.toolName, args: part.args } };
+          yield { type: "tool-call", toolCall: { id: part.toolCallId, name: part.toolName, args: part.args as Record<string, unknown> } };
         } else if (part.type === "finish") {
           yield {
             type: "finish",
             finishReason: mapFinish(part.finishReason),
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
             usage: part.usage
               ? { inputTokens: part.usage.promptTokens, outputTokens: part.usage.completionTokens }
               : undefined,

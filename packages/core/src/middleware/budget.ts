@@ -12,13 +12,13 @@ export function budgetMiddleware(opts: BudgetOptions): ModelMiddleware {
   let calls  = 0;
   return async (req, next) => {
     if (opts.maxCalls !== undefined && calls >= opts.maxCalls) {
-      throw new BudgetError(`budget exceeded: ${calls} model calls`);
+      throw new BudgetError(`budget exceeded: ${String(calls)} model calls`);
     }
     calls++;
     const res = await next(req);
     tokens += (res.usage?.inputTokens ?? 0) + (res.usage?.outputTokens ?? 0);
     if (opts.maxTokens !== undefined && tokens > opts.maxTokens) {
-      throw new BudgetError(`budget exceeded: ${tokens} tokens`);
+      throw new BudgetError(`budget exceeded: ${String(tokens)} tokens`);
     }
     return res;
   };

@@ -26,29 +26,27 @@ const echoTool = defineTool({
   name: "echo",
   description: "Echo text back verbatim. Use when asked to repeat or echo something.",
   parameters: z.object({ text: z.string().describe("the text to echo") }),
-  execute: async ({ text }) => ({ echoed: text }),
+  execute: ({ text }) => Promise.resolve({ echoed: text }),
 });
 
 const logger = {
-  info:  (_o: unknown, m?: string) => process.env.LOG_LEVEL === "debug" && console.error("[info]",  m),
-  warn:  (_o: unknown, m?: string) => console.error("[warn]",  m),
-  error: (_o: unknown, m?: string) => console.error("[error]", m),
-  child: function() { return this as typeof logger; },
+  info:  (_o: unknown, _m?: string) => { /* silent in production — swap for pino */ },
+  warn:  (_o: unknown, m?: string)  => { console.error("[warn]",  m); },
+  error: (_o: unknown, m?: string)  => { console.error("[error]", m); },
+  child() { return logger; },
 };
 
 async function main() {
-  // loadThinyConfig reads thiny.config.json (if present) then applies env overrides.
-  // Switching providers = edit thiny.config.json OR set THINY_MODEL in .env. That's it.
   const model = loadThinyConfig();
 
   const activeModel =
-    process.env["THINY_MODEL"] ??
-    process.env["AGENT_MODEL"] ??
+    process.env.THINY_MODEL ??
+    process.env.AGENT_MODEL ??
     "openai:gpt-4o-mini";
 
   const plugins = [];
-  if (process.env["BRAVE_API_KEY"]) {
-    plugins.push(webSearchPlugin({ apiKey: process.env["BRAVE_API_KEY"] }));
+  if (process.env.BRAVE_API_KEY) {
+    plugins.push(webSearchPlugin({ apiKey: process.env.BRAVE_API_KEY }));
   }
 
   const agent = await createAgent({
@@ -74,23 +72,23 @@ async function main() {
   stdout.write(`Thiny agent ready  [model: ${activeModel}]\n`);
   stdout.write("Type a message and press Enter. Ctrl+C to quit.\n\n");
 
-  while (true) {
+  for (;;) {
     const input = await rl.question("> ");
     if (!input.trim()) continue;
 
     try {
       await agent.run(input, {
         sessionId: "cli",
-        onToken: (delta) => process.stdout.write(delta),
+        onToken: (delta) => { process.stdout.write(delta); },
       });
       stdout.write("\n");
-    } catch (err) {
+    } catch (err: unknown) {
       stdout.write(`\nerror: ${err instanceof Error ? err.message : String(err)}\n`);
     }
   }
 }
 
-main().catch((err) => {
+main().catch((err: unknown) => {
   console.error(err);
   process.exit(1);
 });

@@ -1,6 +1,13 @@
 import { describe, it, expect, vi } from "vitest";
 import { webSearchPlugin } from "../index.js";
 
+function getTool(apiKey: string, fetchImpl?: typeof fetch) {
+  const plugin = webSearchPlugin({ apiKey, fetchImpl });
+  const tool = plugin.tools?.[0];
+  if (!tool) throw new Error("web-search plugin has no tools");
+  return tool;
+}
+
 describe("webSearchPlugin", () => {
   it("contributes a web_search tool named correctly", () => {
     const plugin = webSearchPlugin({ apiKey: "test" });
@@ -19,9 +26,8 @@ describe("webSearchPlugin", () => {
         { status: 200 },
       ),
     );
-    const plugin = webSearchPlugin({ apiKey: "k", fetchImpl: fakeFetch as unknown as typeof fetch });
-    const tool   = plugin.tools![0]!;
-    const out    = (await tool.execute({ query: "thiny agent", count: 1 }, {} as never)) as {
+    const tool = getTool("k", fakeFetch);
+    const out = (await tool.execute({ query: "thiny agent", count: 1 }, {} as never)) as {
       results: Array<{ title: string; url: string; snippet: string }>;
     };
     expect(out.results).toEqual([
@@ -32,8 +38,7 @@ describe("webSearchPlugin", () => {
 
   it("throws a clear error on non-OK HTTP status", async () => {
     const fakeFetch = vi.fn(async () => new Response("", { status: 429 }));
-    const plugin = webSearchPlugin({ apiKey: "k", fetchImpl: fakeFetch as unknown as typeof fetch });
-    const tool   = plugin.tools![0]!;
+    const tool = getTool("k", fakeFetch);
     await expect(tool.execute({ query: "test", count: 1 }, {} as never)).rejects.toThrow(/HTTP 429/);
   });
 });
