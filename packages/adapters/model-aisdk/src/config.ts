@@ -2,13 +2,27 @@ import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { aiSdkModel, type AiSdkOptions } from "./index.js";
 import type { ModelProvider } from "@thiny/core";
+import { ENV_KEYS, readEnvKey } from "./env-keys.js";
 
 /**
- * Shape of thiny.config.json.
- * Any value can be a literal or an "env:VAR_NAME" reference resolved at load time.
+ * Shape of `thiny.config.json`.
+ *
+ * Any string value may be an `"env:VAR_NAME"` reference resolved at load time,
+ * keeping secrets out of committed config files.
+ *
+ * @example
+ * ```json
+ * {
+ *   "model": "openai-compat:llama3",
+ *   "openai": {
+ *     "baseURL": "http://localhost:11434/v1",
+ *     "apiKey": "env:MY_OLLAMA_KEY"
+ *   }
+ * }
+ * ```
  */
 export interface ThinyConfig {
-  /** Model string: "openai:gpt-4o-mini", "anthropic:...", "openai-compat:..." */
+  /** Model string: `"openai:gpt-4o-mini"`, `"anthropic:..."`, `"openai-compat:..."` */
   model?: string;
   openai?: { baseURL?: string; apiKey?: string };
   anthropic?: { baseURL?: string; apiKey?: string };
@@ -16,18 +30,19 @@ export interface ThinyConfig {
 }
 
 /**
- * Resolve an "env:VAR_NAME" reference, or return the value unchanged.
- * Keeps secrets out of committed config files.
+ * Resolve an `"env:VAR_NAME"` reference to the variable's value,
+ * or return a literal string unchanged.
+ * Returns `undefined` when the input is empty or the referenced var is unset.
  */
 function resolveConfigValue(value: string | undefined): string | undefined {
-  if (!value) return value;
+  if (!value) return undefined;
   if (value.startsWith("env:")) return process.env[value.slice(4)];
   return value;
 }
 
 /**
- * Resolve a provider options block from the config file,
- * expanding any "env:" references and returning undefined if the block is empty.
+ * Resolve provider options from a config file block, expanding `"env:"` references.
+ * Returns `undefined` when the block is absent or both fields resolve to empty.
  */
 function resolveProviderOptions(
   options: { baseURL?: string; apiKey?: string } | undefined,
@@ -42,23 +57,22 @@ function resolveProviderOptions(
 }
 
 /**
- * Load a thiny.config.json file and return a ModelProvider.
- * Environment variables override config file values (same resolution order as modelFromEnv).
+ * Load a `thiny.config.json` file and return a `ModelProvider`.
  *
- * Config file lookup order:
- *   1. Explicit path passed to loadThinyConfig()
- *   2. ./thiny.config.json  (current working directory)
- *   3. Falls back to env-only resolution if no config file is found
+ * Environment variables always override config file values (same resolution
+ * order as `modelFromEnv`). The key mapping is defined in `env-keys.ts`.
  *
- * @example thiny.config.json
- * ```json
- * {
- *   "model": "openai-compat:llama3",
- *   "openai": { "baseURL": "http://localhost:11434/v1", "apiKey": "ollama" }
- * }
- * ```
+ * **Config file lookup order:**
+ * 1. Explicit `configPath` argument (when provided).
+ * 2. `./thiny.config.json` in the current working directory.
+ * 3. `./.thinyrc.json` in the current working directory.
+ * 4. Falls back to env-only resolution when no config file exists.
  *
- * @example with env references (keeps secrets out of the config file)
+ * @param configPath - Optional explicit path to the config file.
+ *
+ * @throws {Error} When the config file exists but contains invalid JSON.
+ *
+ * @example `thiny.config.json` with env references
  * ```json
  * { "model": "openai:gpt-4o-mini", "openai": { "apiKey": "env:OPENAI_API_KEY" } }
  * ```
@@ -76,24 +90,28 @@ export function loadThinyConfig(configPath?: string): ModelProvider {
         break;
       } catch (err: unknown) {
         throw new Error(
-          `failed to parse Thiny config at ${candidatePath}: ${err instanceof Error ? err.message : String(err)}`,
+          `Failed to parse Thiny config at "${candidatePath}": ` +
+            (err instanceof Error ? err.message : String(err)),
           { cause: err },
         );
       }
     }
   }
 
-  // Env vars take precedence over config file values
+  // Environment variables take precedence over the config file.
   const model =
-    process.env.THINY_MODEL ?? process.env.AGENT_MODEL ?? fileConfig.model ?? "openai:gpt-4o-mini";
+    process.env[ENV_KEYS.model.primary] ??
+    process.env[ENV_KEYS.model.fallback] ??
+    fileConfig.model ??
+    ENV_KEYS.model.default;
 
   const openaiFromEnv = {
-    baseURL: process.env.THINY_OPENAI_BASE_URL ?? process.env.OPENAI_BASE_URL,
-    apiKey: process.env.THINY_OPENAI_API_KEY ?? process.env.OPENAI_API_KEY,
+    baseURL: readEnvKey(ENV_KEYS.openai.baseURL),
+    apiKey: readEnvKey(ENV_KEYS.openai.apiKey),
   };
   const anthropicFromEnv = {
-    baseURL: process.env.THINY_ANTHROPIC_BASE_URL ?? process.env.ANTHROPIC_BASE_URL,
-    apiKey: process.env.THINY_ANTHROPIC_API_KEY ?? process.env.ANTHROPIC_API_KEY,
+    baseURL: readEnvKey(ENV_KEYS.anthropic.baseURL),
+    apiKey: readEnvKey(ENV_KEYS.anthropic.apiKey),
   };
 
   const openaiFromFile = resolveProviderOptions(fileConfig.openai);

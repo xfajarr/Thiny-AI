@@ -50,4 +50,9 @@ describe("webSearchPlugin", () => {
       /HTTP 429/,
     );
   });
+
+  it("throws at construction when apiKey is empty", () => {
+    expect(() => webSearchPlugin({ apiKey: "" })).toThrow(/apiKey is required/);
+    expect(() => webSearchPlugin({ apiKey: "   " })).toThrow(/apiKey is required/);
+  });
 });

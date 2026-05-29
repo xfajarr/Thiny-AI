@@ -1,45 +1,39 @@
 import { aiSdkModel, type AiSdkOptions } from "./index.js";
 import type { ModelProvider } from "@thiny/core";
+import { ENV_KEYS, readEnvKey } from "./env-keys.js";
 
 /**
- * Build a ModelProvider entirely from environment variables.
- * No code changes needed to switch providers — just update your .env.
+ * Build a `ModelProvider` entirely from environment variables.
  *
- * Resolution order (first defined wins):
+ * No code changes are needed to switch providers — update `.env` only.
+ * Resolution order for each key: `THINY_*` → provider-native key → default.
+ * The full key mapping is defined in `env-keys.ts`.
  *
- *   Model string
- *     THINY_MODEL  →  AGENT_MODEL  →  "openai:gpt-4o-mini"
- *
- *   OpenAI / OpenAI-compatible
- *     THINY_OPENAI_BASE_URL  →  OPENAI_BASE_URL
- *     THINY_OPENAI_API_KEY   →  OPENAI_API_KEY
- *
- *   Anthropic
- *     THINY_ANTHROPIC_BASE_URL  →  ANTHROPIC_BASE_URL
- *     THINY_ANTHROPIC_API_KEY   →  ANTHROPIC_API_KEY
+ * @param env - Environment to read from. Defaults to `process.env`.
+ *   Override in tests to avoid touching the real environment.
  *
  * @example
  * ```ts
- * // In your agent — never change this line again:
- * const agent = await createAgent({ model: modelFromEnv(), ... });
- *
- * // To switch providers, just update .env:
+ * // Switch to Ollama by updating .env only — no code change required:
  * //   THINY_MODEL=openai-compat:llama3
  * //   THINY_OPENAI_BASE_URL=http://localhost:11434/v1
  * //   THINY_OPENAI_API_KEY=ollama
+ * const agent = await createAgent({ model: modelFromEnv(), ... });
  * ```
  */
 export function modelFromEnv(env: NodeJS.ProcessEnv = process.env): ModelProvider {
-  const model = env.THINY_MODEL ?? env.AGENT_MODEL ?? "openai:gpt-4o-mini";
-
-  const openaiBaseURL = env.THINY_OPENAI_BASE_URL ?? env.OPENAI_BASE_URL;
-  const openaiApiKey = env.THINY_OPENAI_API_KEY ?? env.OPENAI_API_KEY;
-  const anthropicBaseURL = env.THINY_ANTHROPIC_BASE_URL ?? env.ANTHROPIC_BASE_URL;
-  const anthropicApiKey = env.THINY_ANTHROPIC_API_KEY ?? env.ANTHROPIC_API_KEY;
+  const model =
+    env[ENV_KEYS.model.primary] ?? env[ENV_KEYS.model.fallback] ?? ENV_KEYS.model.default;
 
   const opts: AiSdkOptions = { model };
-  if (openaiBaseURL || openaiApiKey) opts.openai = { baseURL: openaiBaseURL, apiKey: openaiApiKey };
-  if (anthropicBaseURL || anthropicApiKey)
+
+  const openaiBaseURL = readEnvKey(ENV_KEYS.openai.baseURL, env);
+  const openaiApiKey = readEnvKey(ENV_KEYS.openai.apiKey, env);
+  if (openaiBaseURL ?? openaiApiKey) opts.openai = { baseURL: openaiBaseURL, apiKey: openaiApiKey };
+
+  const anthropicBaseURL = readEnvKey(ENV_KEYS.anthropic.baseURL, env);
+  const anthropicApiKey = readEnvKey(ENV_KEYS.anthropic.apiKey, env);
+  if (anthropicBaseURL ?? anthropicApiKey)
     opts.anthropic = { baseURL: anthropicBaseURL, apiKey: anthropicApiKey };
 
   return aiSdkModel(opts);

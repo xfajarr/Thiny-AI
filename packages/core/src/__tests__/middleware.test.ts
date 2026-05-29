@@ -130,7 +130,7 @@ describe("policyMiddleware", () => {
         { tool, args: { bad: true }, ctx: noApproverCtx },
         () => Promise.resolve("should not reach"),
       ),
-    ).rejects.toThrow(/policy: invalid args/i);
+    ).rejects.toThrow(/Invalid arguments for tool/);
   });
 
   it("lets rules deny based on parsed args", async () => {
@@ -168,7 +168,7 @@ describe("policyMiddleware", () => {
       run({ tool, args: { to: "0xabc", value: "5000" }, ctx: mockApproverCtx }, () =>
         Promise.resolve("ok"),
       ),
-    ).rejects.toThrow(/policy denied: value 5000 exceeds cap/);
+    ).rejects.toThrow(/Policy denied.*value 5000 exceeds cap/);
   });
 });
 

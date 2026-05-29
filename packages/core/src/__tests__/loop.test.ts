@@ -158,6 +158,6 @@ describe("runLoop", () => {
           toolCalls: [{ id: "c", name: "noop", args: {} }],
         }),
     };
-    await expect(runLoop("loop", makeCtx(model, tools))).rejects.toThrow(/max steps/);
+    await expect(runLoop("loop", makeCtx(model, tools))).rejects.toThrow(/exceeded the maximum/);
   });
 });

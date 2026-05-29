@@ -23,11 +23,11 @@ describe("ToolRegistry", () => {
     r.register(echo);
     expect(() => {
       r.register(echo);
-    }).toThrow(/already registered/);
+    }).toThrow(/Tool already registered/);
   });
 
   it("throws a clear error for unknown tools", () => {
     const r = new ToolRegistry();
-    expect(() => r.get("nope")).toThrow(/unknown tool: nope/);
+    expect(() => r.get("nope")).toThrow(/Unknown tool.*nope/);
   });
 });

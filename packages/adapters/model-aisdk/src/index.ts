@@ -14,6 +14,7 @@ import { toCoreMessages, toAiTools } from "./convert.js";
 
 // Re-export dynamic factories so callers only need one import.
 export { modelFromEnv } from "./env.js";
+export { ENV_KEYS, readEnvKey } from "./env-keys.js";
 export { loadThinyConfig, type ThinyConfig } from "./config.js";
 
 /** Map AI SDK finish reasons to Thiny's normalised FinishReason. */
