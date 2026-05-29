@@ -25,9 +25,14 @@ export interface PluginExtensions {
   middleware: { model: ModelMiddleware[]; tool: ToolMiddleware[] };
 }
 
+/** Dependencies injected into `loadPlugins()` by `createAgent()`. */
 export interface PluginLoaderDeps {
+  /** The shared registry that plugins register tools into during Phase 1. */
   registry: ToolRegistry;
-  /** Built lazily so setup() sees the fully-populated registry and services. */
+  /**
+   * Factory that builds the `Ctx` used during Phase 2 (setup).
+   * Called lazily so setup() sees the fully-populated registry.
+   */
   makeSetupCtx: () => Ctx;
 }
 

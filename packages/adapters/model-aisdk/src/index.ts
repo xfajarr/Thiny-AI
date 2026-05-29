@@ -106,6 +106,21 @@ function resolveModel(model: LanguageModel | string, opts: AiSdkOptions): Langua
   );
 }
 
+/**
+ * Create a `ModelProvider` backed by the Vercel AI SDK.
+ *
+ * Supports all `@ai-sdk/*` providers and any OpenAI-compatible or
+ * Anthropic-compatible endpoint via `baseURL` override.
+ * Both blocking (`generate`) and streaming (`stream`) are implemented.
+ *
+ * For env-driven configuration, prefer `modelFromEnv()` or `loadThinyConfig()`.
+ *
+ * @example
+ * ```ts
+ * aiSdkModel({ model: "openai:gpt-4o-mini" })
+ * aiSdkModel({ model: "openai-compat:llama3", openai: { baseURL: "http://localhost:11434/v1" } })
+ * ```
+ */
 export function aiSdkModel(opts: AiSdkOptions): ModelProvider {
   const model = resolveModel(opts.model, opts);
   const maxRetries = opts.maxRetries ?? 2;

@@ -43,27 +43,68 @@ const fallbackLogger: Logger = {
   child: () => fallbackLogger,
 };
 
+/** Configuration passed to `createAgent()`. */
 export interface AgentConfig {
+  /** The language model provider. Use `aiSdkModel()`, `modelFromEnv()`, or `loadThinyConfig()`. */
   model: ModelProvider;
+  /** Memory backend for persisting conversation history. Defaults to in-memory (ephemeral). */
   memory?: MemoryBackend;
+  /** Tools registered directly on this agent (not via plugins). */
   tools?: Tool[];
+  /** Plugins to load. Each contributes tools, middleware, and/or a memory backend. */
   plugins?: Plugin[];
+  /** System prompt prepended to the conversation on the first turn of each session. */
   systemPrompt?: string;
+  /** Max ReAct steps before `MaxStepsError` is thrown. Default: 12. */
   maxSteps?: number;
+  /** Structured logger. Defaults to a console-based fallback. Use `pinoLogger()` in production. */
   logger?: Logger;
+  /** Transaction signer for on-chain tools. Absent by default — no signing without explicit opt-in. */
   signer?: Signer;
+  /** Approval gate for sensitive tools. Use `denyApprover` (headless) or a CLI prompt (interactive). */
   approver?: Approver;
 }
 
+/**
+ * A running agent instance returned by `createAgent()`.
+ *
+ * Reuse the same instance across multiple `run()` calls to share memory,
+ * registered tools, and middleware — each call gets its own isolated `state` Map.
+ */
 export interface Agent {
+  /**
+   * Run the agent with the given input and return its final text response.
+   *
+   * @param input      - The user's message for this turn.
+   * @param opts.sessionId - Session to load history from and persist to. Default: `"default"`.
+   * @param opts.onToken  - Called for each text delta when streaming is available.
+   */
   run(
     input: string,
     opts?: { sessionId?: string; onToken?: (delta: string) => void },
   ): Promise<string>;
+  /** The tool registry for this agent. Inspect registered tools or add programmatically after creation. */
   registry: ToolRegistry;
+  /** The event bus for this agent. Subscribe to lifecycle events for custom observability. */
   events: EventBus;
 }
 
+/**
+ * Create and initialise an agent from the given configuration.
+ *
+ * Loads all plugins (two-phase: register then setup), composes middleware,
+ * and wires the spawn function. The returned `Agent` is ready to use immediately.
+ *
+ * @example
+ * ```ts
+ * const agent = await createAgent({
+ *   model: loadThinyConfig(),
+ *   systemPrompt: "You are a helpful assistant.",
+ *   plugins: [webSearchPlugin({ apiKey: process.env.BRAVE_API_KEY! })],
+ * });
+ * const reply = await agent.run("What is the weather today?");
+ * ```
+ */
 export async function createAgent(config: AgentConfig): Promise<Agent> {
   const registry = new ToolRegistry();
   for (const t of config.tools ?? []) registry.register(t);
