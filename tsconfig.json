@@ -4,6 +4,7 @@
     { "path": "packages/core" },
     { "path": "packages/adapters/model-aisdk" },
     { "path": "packages/adapters/logger-pino" },
+    { "path": "packages/adapters/memory-sqlite" },
     { "path": "packages/plugins/web-search" }
   ]
 }

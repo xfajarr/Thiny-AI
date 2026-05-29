@@ -8,6 +8,7 @@
   "dependencies": {
     "@thiny/core": "workspace:*",
     "@thiny/logger-pino": "workspace:*",
+    "@thiny/memory-sqlite": "workspace:*",
     "@thiny/model-aisdk": "workspace:*",
     "@thiny/plugin-web-search": "workspace:*",
     "zod": "^3.23.8"

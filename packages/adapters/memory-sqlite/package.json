@@ -1,0 +1,12 @@
+{
+  "name": "@thiny/memory-sqlite",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@thiny/core": "workspace:*",
+    "@libsql/client": "^0.6.0"
+  }
+}

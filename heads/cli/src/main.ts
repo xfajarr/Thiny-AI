@@ -21,6 +21,7 @@ import {
 } from "@thiny/core";
 import { loadThinyConfig } from "@thiny/model-aisdk";
 import { pinoLogger } from "@thiny/logger-pino";
+import { sqliteMemory } from "@thiny/memory-sqlite";
 import { webSearchPlugin } from "@thiny/plugin-web-search";
 
 const echoTool = defineTool({
@@ -30,7 +31,7 @@ const echoTool = defineTool({
   execute: ({ text }) => Promise.resolve({ echoed: text }),
 });
 
-async function main() {
+async function main(): Promise<void> {
   const logger = pinoLogger({
     level: process.env.LOG_LEVEL ?? "info",
     // Write structured audit log to file when AUDIT_LOG is set, e.g. AUDIT_LOG=audit.log
@@ -43,6 +44,11 @@ async function main() {
     process.env.THINY_MODEL ?? process.env.AGENT_MODEL ?? "openai:gpt-4o-mini";
   const model = loadThinyConfig();
 
+  // Persist sessions in SQLite so context survives process restarts.
+  const memory = await sqliteMemory({
+    url: process.env.SESSION_DB ?? "file:thiny.sqlite",
+  });
+
   const plugins = [];
   if (process.env.BRAVE_API_KEY) {
     plugins.push(webSearchPlugin({ apiKey: process.env.BRAVE_API_KEY }));
@@ -51,6 +57,7 @@ async function main() {
   const agent = await createAgent({
     model,
     logger,
+    memory,
     systemPrompt:
       "You are a helpful CLI assistant. Use tools when they help you answer better. " +
       "Be concise.",
@@ -60,7 +67,7 @@ async function main() {
         name: "observability",
         modelMiddleware: [
           modelAuditMiddleware(logger),
-          budgetMiddleware({ maxCalls: 50, maxTokens: 500_000 }),
+          budgetMiddleware({ maxCalls: 50, maxTokens: 500_000, logger }),
         ],
         toolMiddleware: [toolAuditMiddleware(logger)],
       },
@@ -70,6 +77,7 @@ async function main() {
 
   const rl = createInterface({ input: stdin, output: stdout });
   stdout.write(`Thiny agent ready  [model: ${activeModelName}]\n`);
+  stdout.write(`Sessions persisted in: ${process.env.SESSION_DB ?? "file:thiny.sqlite"}\n`);
   stdout.write("Type a message and press Enter. Ctrl+C to quit.\n\n");
 
   for (;;) {
