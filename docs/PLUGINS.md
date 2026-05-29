@@ -13,7 +13,9 @@ import type { Plugin } from "@thiny/core";
 
 export const myPlugin: Plugin = {
   name: "my-plugin",
-  tools: [/* ... */],
+  tools: [
+    /* ... */
+  ],
 };
 ```
 
@@ -21,7 +23,12 @@ You package it as a factory function when it needs configuration:
 
 ```ts
 export function myPlugin(opts: { apiKey: string }): Plugin {
-  return { name: "my-plugin", tools: [/* built from opts */] };
+  return {
+    name: "my-plugin",
+    tools: [
+      /* built from opts */
+    ],
+  };
 }
 ```
 
@@ -29,13 +36,13 @@ export function myPlugin(opts: { apiKey: string }): Plugin {
 
 ## The five extension points
 
-| Field | Purpose | When to use |
-|---|---|---|
-| `tools` | Callable capabilities | 90% of plugins. The main event. |
-| `modelMiddleware` | Wrap every LLM call | Caching, cost tracking, prompt shaping, compaction |
-| `toolMiddleware` | Wrap every tool execution | Policy, approval, audit, rate-limiting, idempotency |
-| `memory` | Replace the conversation store | Swap in-memory → SQLite → vector DB |
-| `setup(ctx)` | Initialise after all plugins register | Open connections, find sibling tools |
+| Field             | Purpose                               | When to use                                         |
+| ----------------- | ------------------------------------- | --------------------------------------------------- |
+| `tools`           | Callable capabilities                 | 90% of plugins. The main event.                     |
+| `modelMiddleware` | Wrap every LLM call                   | Caching, cost tracking, prompt shaping, compaction  |
+| `toolMiddleware`  | Wrap every tool execution             | Policy, approval, audit, rate-limiting, idempotency |
+| `memory`          | Replace the conversation store        | Swap in-memory → SQLite → vector DB                 |
+| `setup(ctx)`      | Initialise after all plugins register | Open connections, find sibling tools                |
 
 ---
 
@@ -143,8 +150,8 @@ import { cryptoPricesPlugin } from "../index.js";
 
 describe("cryptoPricesPlugin", () => {
   it("returns the price for a valid coin id", async () => {
-    const fakeFetch = vi.fn(async () =>
-      new Response(JSON.stringify({ bitcoin: { usd: 65_000 } }), { status: 200 }),
+    const fakeFetch = vi.fn(
+      async () => new Response(JSON.stringify({ bitcoin: { usd: 65_000 } }), { status: 200 }),
     );
     const plugin = cryptoPricesPlugin({ fetchImpl: fakeFetch as unknown as typeof fetch });
     const tool = plugin.tools![0]!;
@@ -155,7 +162,9 @@ describe("cryptoPricesPlugin", () => {
   it("throws on non-OK HTTP status", async () => {
     const fakeFetch = vi.fn(async () => new Response("", { status: 429 }));
     const plugin = cryptoPricesPlugin({ fetchImpl: fakeFetch as unknown as typeof fetch });
-    await expect(plugin.tools![0]!.execute({ id: "bitcoin" }, {} as never)).rejects.toThrow(/HTTP 429/);
+    await expect(plugin.tools![0]!.execute({ id: "bitcoin" }, {} as never)).rejects.toThrow(
+      /HTTP 429/,
+    );
   });
 });
 ```
@@ -172,7 +181,9 @@ Use `setup` when your plugin needs to initialise after all other plugins have re
 export function dexPlugin(): Plugin {
   return {
     name: "dex",
-    tools: [/* swap tool */],
+    tools: [
+      /* swap tool */
+    ],
     async setup(ctx) {
       // Phase 2: the evm plugin's tools are already registered
       const readContract = ctx.tools.get("evm_read_contract");
@@ -230,9 +241,11 @@ export const rateLimit = (perMinute: number): ToolMiddleware => {
 **To deny, throw before calling `next`.** The loop converts the throw into an observation; the agent sees it and can adapt.
 
 **Compose order** matters — first in the array wraps everything:
+
 ```
 [timeout, retry, rateLimit, cache] → last in = innermost
 ```
+
 Put circuit breakers outermost, cache innermost.
 
 ---
@@ -256,7 +269,9 @@ const myRule: PolicyRule = (call) => {
 
 // ❌ wrong: reading model text — this is the prompt-injection hole
 const badRule: PolicyRule = (call) => {
-  if (call.ctx.state.get("lastModelText")?.includes("approved")) { /* ... */ }
+  if (call.ctx.state.get("lastModelText")?.includes("approved")) {
+    /* ... */
+  }
 };
 ```
 

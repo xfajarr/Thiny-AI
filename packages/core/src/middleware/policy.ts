@@ -26,7 +26,10 @@ export function policyMiddleware(rules: PolicyRule[]): ToolMiddleware {
 
     for (const rule of rules) {
       const d = rule(call);
-      if (d) { decision = d; break; }
+      if (d) {
+        decision = d;
+        break;
+      }
     }
 
     if (decision.effect === "deny") {
@@ -35,7 +38,11 @@ export function policyMiddleware(rules: PolicyRule[]): ToolMiddleware {
 
     if (decision.effect === "approve") {
       const approved = call.ctx.approver
-        ? await call.ctx.approver({ tool: call.tool.name, args: call.args, reason: decision.reason })
+        ? await call.ctx.approver({
+            tool: call.tool.name,
+            args: call.args,
+            reason: decision.reason,
+          })
         : false;
       if (!approved) {
         throw new PolicyError(`approval required and not granted: ${call.tool.name}`);

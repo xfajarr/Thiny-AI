@@ -28,7 +28,7 @@ interface BraveResponse {
  */
 export function webSearchPlugin(opts: WebSearchOptions): Plugin {
   const endpoint = opts.endpoint ?? "https://api.search.brave.com/res/v1/web/search";
-  const doFetch  = opts.fetchImpl ?? fetch;
+  const doFetch = opts.fetchImpl ?? fetch;
 
   return {
     name: "web-search",
@@ -54,8 +54,8 @@ export function webSearchPlugin(opts: WebSearchOptions): Plugin {
           const data = (await res.json()) as BraveResponse;
           return {
             results: (data.web?.results ?? []).map((r) => ({
-              title:   r.title,
-              url:     r.url,
+              title: r.title,
+              url: r.url,
               snippet: r.description,
             })),
           };

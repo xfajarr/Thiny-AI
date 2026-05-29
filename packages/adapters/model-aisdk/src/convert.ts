@@ -3,7 +3,11 @@ import { tool as aiTool } from "ai";
 import type { Message, Tool } from "@thiny/core";
 
 function safeJson(s: string): unknown {
-  try { return JSON.parse(s); } catch { return s; }
+  try {
+    return JSON.parse(s);
+  } catch {
+    return s;
+  }
 }
 
 /** Our domain Message[] → AI SDK CoreMessage[]. */
@@ -33,12 +37,14 @@ export function toCoreMessages(messages: Message[]): CoreMessage[] {
       case "tool":
         return {
           role: "tool",
-          content: [{
-            type: "tool-result",
-            toolCallId: m.toolCallId,
-            toolName: m.toolName,
-            result: safeJson(m.content),
-          }],
+          content: [
+            {
+              type: "tool-result",
+              toolCallId: m.toolCallId,
+              toolName: m.toolName,
+              result: safeJson(m.content),
+            },
+          ],
         };
       default:
         throw new Error(`unhandled message role: ${(m as { role: string }).role}`);

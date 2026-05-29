@@ -14,17 +14,38 @@
     "cli": "node --env-file=.env --import tsx heads/cli/src/main.ts",
     "create-thiny": "node --import tsx apps/create-thiny/src/index.ts",
     "lint": "eslint \"packages/**/*.ts\" \"heads/**/*.ts\" --max-warnings 0",
-    "lint:fix": "eslint \"packages/**/*.ts\" \"heads/**/*.ts\" --fix"
+    "lint:fix": "eslint \"packages/**/*.ts\" \"heads/**/*.ts\" --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepare": "husky",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "changeset publish"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.31.0",
     "@eslint/js": "^10.0.1",
     "@types/node": "^20.14.0",
+    "@vitest/coverage-v8": "^1.6.1",
     "eslint": "^10.4.0",
+    "eslint-config-prettier": "^10.1.8",
     "globals": "^17.6.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.5",
+    "prettier": "^3.8.3",
     "tsx": "^4.16.0",
     "typescript": "^5.5.0",
     "typescript-eslint": "^8.60.0",
     "vitest": "^1.6.0"
   },
-  "packageManager": "pnpm@9.6.0"
+  "packageManager": "pnpm@9.6.0",
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix --max-warnings 0 --no-warn-ignored",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml,js,cjs,mjs}": [
+      "prettier --write"
+    ]
+  }
 }

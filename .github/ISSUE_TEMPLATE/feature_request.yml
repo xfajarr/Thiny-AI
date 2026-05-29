@@ -1,0 +1,54 @@
+name: Feature request
+description: Suggest a new plugin, adapter, or kernel capability
+labels: [enhancement]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Is your feature a plugin (new tools/middleware), an adapter (new port implementation),
+        or a kernel change? Being specific helps us scope it correctly.
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind
+      options:
+        - Plugin (new tools or middleware)
+        - Adapter (new ModelProvider / MemoryBackend / Signer)
+        - Head (new transport — HTTP, Telegram, Discord…)
+        - Kernel (loop, registry, plugin system)
+        - Tooling / DX
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / motivation
+      description: What problem does this solve? What use case does it unlock?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What would the API look like? Rough code is welcome.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Any workarounds you've tried, or different approaches that could work.
+
+  - type: checkboxes
+    id: willing
+    attributes:
+      label: Are you willing to submit a PR?
+      options:
+        - label: Yes, I'd like to implement this

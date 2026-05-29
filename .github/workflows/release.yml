@@ -1,22 +1,32 @@
 name: Release
 
-# Triggered when you push a version tag: git tag v0.2.0 && git push --tags
+# Triggered by every push to main.
+# - If there are pending changesets:  opens/updates a "Version Packages" PR.
+# - When that PR is merged:           publishes changed packages to npm and
+#                                     creates GitHub Releases automatically.
 on:
   push:
-    tags:
-      - "v*.*.*"
+    branches: [main]
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   release:
-    name: Publish to npm
+    name: Release (changesets)
     runs-on: ubuntu-latest
     permissions:
-      contents: write    # create GitHub releases
-      id-token: write    # npm provenance (verifiable builds)
+      contents: write # push version-bump commits + create GitHub Releases
+      pull-requests: write # open / update the "Version Packages" PR
+      id-token: write # npm provenance (verifiable builds)
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Full history lets changesets compute which packages changed
+          fetch-depth: 0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -33,7 +43,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # Run the full quality gate before publishing — never publish broken code.
+      # Full quality gate — never publish broken code
       - name: Typecheck
         run: pnpm exec tsc -b
 
@@ -43,19 +53,22 @@ jobs:
       - name: Test
         run: pnpm test
 
-      - name: Build (compile TypeScript → dist/)
+      - name: Build packages (ts → dist/)
         run: pnpm -r exec tsc -p tsconfig.json
 
-      # Publish all workspace packages that have changed.
-      # Requires NPM_TOKEN in repo secrets (Settings → Secrets → Actions).
-      - name: Publish packages
-        run: pnpm -r publish --access public --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      # Create a GitHub Release with auto-generated notes from PRs/commits.
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+      # changesets/action does two things depending on state:
+      #  a) If changesets exist in .changeset/ → opens a "Version Packages" PR
+      #     that bumps versions and updates CHANGELOG files.
+      #  b) If main was just merged from a "Version Packages" PR → publishes
+      #     to npm and creates GitHub Releases.
+      - name: Create release PR or publish
+        uses: changesets/action@v1
         with:
-          generate_release_notes: true
-          token: ${{ secrets.GITHUB_TOKEN }}
+          publish: pnpm release
+          title: "chore: release packages"
+          commit: "chore: release packages"
+          createGithubReleases: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

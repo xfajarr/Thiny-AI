@@ -16,10 +16,10 @@ export interface Usage {
  * Every turn in the conversation is one of these four shapes.
  */
 export type Message =
-  | { role: "system";    content: string }
-  | { role: "user";      content: string }
+  | { role: "system"; content: string }
+  | { role: "user"; content: string }
   | { role: "assistant"; content: string; toolCalls?: ToolCall[] }
-  | { role: "tool";      toolCallId: string; toolName: string; content: string };
+  | { role: "tool"; toolCallId: string; toolName: string; content: string };
 
 /** Why the model stopped (provider-normalised). */
 export type FinishReason = "stop" | "tool_calls" | "length" | "error";
@@ -32,7 +32,7 @@ export interface ModelResponse {
   usage?: Usage;
 }
 
-export const userMessage   = (content: string): Message => ({ role: "user",   content });
+export const userMessage = (content: string): Message => ({ role: "user", content });
 export const systemMessage = (content: string): Message => ({ role: "system", content });
 
 export function isToolMessage(m: Message): m is Extract<Message, { role: "tool" }> {

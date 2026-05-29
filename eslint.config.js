@@ -2,6 +2,7 @@
 import eslint from "@eslint/js";
 import tseslint from "typescript-eslint";
 import globals from "globals";
+import prettierConfig from "eslint-config-prettier";
 
 export default tseslint.config(
   // ── Ignored paths ───────────────────────────────────────────────────────────
@@ -9,7 +10,8 @@ export default tseslint.config(
     ignores: [
       "**/dist/**",
       "**/node_modules/**",
-      "**/*.config.js",      // this file
+      "**/*.config.js", // this file (eslint.config.js)
+      "**/*.config.ts", // vitest.config.ts etc — config files, not app code
       "**/*.config.example.json",
       "coverage/**",
     ],
@@ -38,9 +40,9 @@ export default tseslint.config(
     rules: {
       // ── Critical async rules (most important for agent code) ─────────────
       "@typescript-eslint/no-floating-promises": "error",
-      "@typescript-eslint/no-misused-promises":  "error",
-      "@typescript-eslint/await-thenable":        "error",
-      "@typescript-eslint/require-await":         "error",
+      "@typescript-eslint/no-misused-promises": "error",
+      "@typescript-eslint/await-thenable": "error",
+      "@typescript-eslint/require-await": "error",
 
       // ── Type import discipline ────────────────────────────────────────────
       "@typescript-eslint/consistent-type-imports": [
@@ -51,7 +53,7 @@ export default tseslint.config(
 
       // ── Explicit typing at module boundaries ────────────────────────────
       "@typescript-eslint/explicit-module-boundary-types": "off", // too noisy for internal utils
-      "@typescript-eslint/explicit-function-return-type": "off",  // inferred is fine
+      "@typescript-eslint/explicit-function-return-type": "off", // inferred is fine
 
       // ── Unused variables — allow _ prefix for intentionally unused ───────
       "@typescript-eslint/no-unused-vars": [
@@ -66,11 +68,11 @@ export default tseslint.config(
       // ── Pragmatic relaxations for a tool-calling framework ───────────────
       // Tool args come from an LLM as `unknown`; type assertions are the right
       // pattern here — the Zod boundary is the real safety net.
-      "@typescript-eslint/no-unsafe-assignment":   "warn",
+      "@typescript-eslint/no-unsafe-assignment": "warn",
       "@typescript-eslint/no-unsafe-member-access": "warn",
-      "@typescript-eslint/no-unsafe-argument":     "warn",
-      "@typescript-eslint/no-unsafe-return":       "warn",
-      "@typescript-eslint/no-unsafe-call":         "warn",
+      "@typescript-eslint/no-unsafe-argument": "warn",
+      "@typescript-eslint/no-unsafe-return": "warn",
+      "@typescript-eslint/no-unsafe-call": "warn",
 
       // Non-null assertions: warn rather than error (used deliberately).
       "@typescript-eslint/no-non-null-assertion": "warn",
@@ -82,26 +84,29 @@ export default tseslint.config(
       ],
 
       // ── Style ────────────────────────────────────────────────────────────
-      "@typescript-eslint/prefer-nullish-coalescing":   "error",
-      "@typescript-eslint/prefer-optional-chain":       "error",
-      "@typescript-eslint/no-unnecessary-condition":    "error",
+      "@typescript-eslint/prefer-nullish-coalescing": "error",
+      "@typescript-eslint/prefer-optional-chain": "error",
+      "@typescript-eslint/no-unnecessary-condition": "error",
       "@typescript-eslint/switch-exhaustiveness-check": "error",
-      "@typescript-eslint/array-type":                  ["error", { default: "array-simple" }],
+      "@typescript-eslint/array-type": ["error", { default: "array-simple" }],
     },
   },
+
+  // ── Prettier — must be last, disables ESLint rules that conflict ───────────
+  prettierConfig,
 
   // ── Test file relaxations ──────────────────────────────────────────────────
   {
     files: ["**/__tests__/**/*.ts", "**/*.test.ts"],
     rules: {
       // Tests intentionally use `{} as never` to build fake contexts.
-      "@typescript-eslint/no-unsafe-assignment":    "off",
-      "@typescript-eslint/no-unsafe-argument":      "off",
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-argument": "off",
       "@typescript-eslint/no-unsafe-member-access": "off",
-      "@typescript-eslint/no-explicit-any":         "off",
-      "@typescript-eslint/require-await":           "off",
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/require-await": "off",
       // Spies and fake functions commonly return void without await.
-      "@typescript-eslint/no-floating-promises":    "off",
+      "@typescript-eslint/no-floating-promises": "off",
     },
   },
 );

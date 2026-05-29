@@ -25,9 +25,15 @@ class EphemeralMemory implements MemoryBackend {
 }
 
 const consoleLogger: Logger = {
-  info:  (o, m) => { console.error("[info]",  m ?? "", o); },
-  warn:  (o, m) => { console.error("[warn]",  m ?? "", o); },
-  error: (o, m) => { console.error("[error]", m ?? "", o); },
+  info: (o, m) => {
+    console.error("[info]", m ?? "", o);
+  },
+  warn: (o, m) => {
+    console.error("[warn]", m ?? "", o);
+  },
+  error: (o, m) => {
+    console.error("[error]", m ?? "", o);
+  },
   child: () => consoleLogger,
 };
 
@@ -95,7 +101,10 @@ export async function createAgent(config: AgentConfig): Promise<Agent> {
       approver: config.approver,
       maxSteps: config.maxSteps ?? 12,
     };
-    ctx.spawn = makeSpawn({ model: config.model, events, logger: ctx.logger }, { maxSteps: ctx.maxSteps });
+    ctx.spawn = makeSpawn(
+      { model: config.model, events, logger: ctx.logger },
+      { maxSteps: ctx.maxSteps },
+    );
 
     const history = await memory.load(sessionId);
     const seed: Message[] =

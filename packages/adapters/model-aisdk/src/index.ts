@@ -1,13 +1,20 @@
 import { generateText, streamText, type LanguageModel } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
 import { createAnthropic } from "@ai-sdk/anthropic";
-import type { ModelProvider, Message, ModelResponse, Tool, FinishReason, StreamEvent } from "@thiny/core";
+import type {
+  ModelProvider,
+  Message,
+  ModelResponse,
+  Tool,
+  FinishReason,
+  StreamEvent,
+} from "@thiny/core";
 import { toCoreMessages, toAiTools } from "./convert.js";
 
 function mapFinish(reason: string): FinishReason {
   if (reason === "tool-calls") return "tool_calls";
-  if (reason === "length")     return "length";
-  if (reason === "error")      return "error";
+  if (reason === "length") return "length";
+  if (reason === "error") return "error";
   return "stop";
 }
 
@@ -54,15 +61,16 @@ function resolveModel(model: LanguageModel | string, opts: AiSdkOptions): Langua
   if (typeof model !== "string") return model;
 
   const colonIdx = model.indexOf(":");
-  if (colonIdx === -1) throw new Error(`invalid model string "${model}" — expected "provider:model-id"`);
+  if (colonIdx === -1)
+    throw new Error(`invalid model string "${model}" — expected "provider:model-id"`);
 
   const provider = model.slice(0, colonIdx);
-  const id       = model.slice(colonIdx + 1);
+  const id = model.slice(colonIdx + 1);
 
   if (provider === "openai" || provider === "openai-compat") {
     const client = createOpenAI({
       baseURL: opts.openai?.baseURL,
-      apiKey:  opts.openai?.apiKey,
+      apiKey: opts.openai?.apiKey,
     });
     return client(id);
   }
@@ -70,15 +78,15 @@ function resolveModel(model: LanguageModel | string, opts: AiSdkOptions): Langua
   if (provider === "anthropic") {
     const client = createAnthropic({
       baseURL: opts.anthropic?.baseURL,
-      apiKey:  opts.anthropic?.apiKey,
+      apiKey: opts.anthropic?.apiKey,
     });
     return client(id);
   }
 
   throw new Error(
     `unknown provider "${provider}" in model string "${model}"\n` +
-    `Supported: "openai:<id>", "openai-compat:<id>", "anthropic:<id>"\n` +
-    `Or pass a LanguageModel instance directly.`,
+      `Supported: "openai:<id>", "openai-compat:<id>", "anthropic:<id>"\n` +
+      `Or pass a LanguageModel instance directly.`,
   );
 }
 
@@ -93,18 +101,18 @@ export function aiSdkModel(opts: AiSdkOptions): ModelProvider {
     async generate(messages: Message[], tools: Tool[]): Promise<ModelResponse> {
       const result = await generateText({
         model,
-        messages:   toCoreMessages(messages),
-         
-        tools:      tools.length !== 0 ? toAiTools(tools) : undefined,
-         
-        toolChoice: tools.length !== 0 ? "auto"           : undefined,
+        messages: toCoreMessages(messages),
+
+        tools: tools.length !== 0 ? toAiTools(tools) : undefined,
+
+        toolChoice: tools.length !== 0 ? "auto" : undefined,
         maxRetries: opts.maxRetries ?? 2,
       });
       return {
         text: result.text || undefined,
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         toolCalls: result.toolCalls?.map((tc) => ({
-          id:   tc.toolCallId,
+          id: tc.toolCallId,
           name: tc.toolName,
           args: tc.args as Record<string, unknown>,
         })),
@@ -119,18 +127,25 @@ export function aiSdkModel(opts: AiSdkOptions): ModelProvider {
     async *stream(messages: Message[], tools: Tool[]): AsyncGenerator<StreamEvent> {
       const result = streamText({
         model,
-        messages:   toCoreMessages(messages),
-         
-        tools:      tools.length !== 0 ? toAiTools(tools) : undefined,
-         
-        toolChoice: tools.length !== 0 ? "auto"           : undefined,
+        messages: toCoreMessages(messages),
+
+        tools: tools.length !== 0 ? toAiTools(tools) : undefined,
+
+        toolChoice: tools.length !== 0 ? "auto" : undefined,
         maxRetries: opts.maxRetries ?? 2,
       });
       for await (const part of result.fullStream) {
         if (part.type === "text-delta") {
           yield { type: "text-delta", text: part.textDelta };
         } else if (part.type === "tool-call") {
-          yield { type: "tool-call", toolCall: { id: part.toolCallId, name: part.toolName, args: part.args as Record<string, unknown> } };
+          yield {
+            type: "tool-call",
+            toolCall: {
+              id: part.toolCallId,
+              name: part.toolName,
+              args: part.args as Record<string, unknown>,
+            },
+          };
         } else if (part.type === "finish") {
           yield {
             type: "finish",

@@ -37,7 +37,7 @@ function resolveSection(
   if (!section) return undefined;
   const resolved = {
     baseURL: resolveEnvRef(section.baseURL),
-    apiKey:  resolveEnvRef(section.apiKey),
+    apiKey: resolveEnvRef(section.apiKey),
   };
   if (!resolved.baseURL && !resolved.apiKey) return undefined;
   return resolved;
@@ -76,10 +76,7 @@ export function loadThinyConfig(configPath?: string): ModelProvider {
   // 1. Find and parse the config file
   const candidates = configPath
     ? [configPath]
-    : [
-        resolve(process.cwd(), "thiny.config.json"),
-        resolve(process.cwd(), ".thinyrc.json"),
-      ];
+    : [resolve(process.cwd(), "thiny.config.json"), resolve(process.cwd(), ".thinyrc.json")];
 
   let fileConfig: ThinyConfig = {};
   for (const p of candidates) {
@@ -98,22 +95,19 @@ export function loadThinyConfig(configPath?: string): ModelProvider {
 
   // 2. Env vars override config file (same priority as modelFromEnv)
   const model =
-    process.env.THINY_MODEL ??
-    process.env.AGENT_MODEL ??
-    fileConfig.model ??
-    "openai:gpt-4o-mini";
+    process.env.THINY_MODEL ?? process.env.AGENT_MODEL ?? fileConfig.model ?? "openai:gpt-4o-mini";
 
   // Merge: env wins, then config file, then nothing
   const openaiEnv = {
     baseURL: process.env.THINY_OPENAI_BASE_URL ?? process.env.OPENAI_BASE_URL,
-    apiKey:  process.env.THINY_OPENAI_API_KEY  ?? process.env.OPENAI_API_KEY,
+    apiKey: process.env.THINY_OPENAI_API_KEY ?? process.env.OPENAI_API_KEY,
   };
   const anthropicEnv = {
     baseURL: process.env.THINY_ANTHROPIC_BASE_URL ?? process.env.ANTHROPIC_BASE_URL,
-    apiKey:  process.env.THINY_ANTHROPIC_API_KEY  ?? process.env.ANTHROPIC_API_KEY,
+    apiKey: process.env.THINY_ANTHROPIC_API_KEY ?? process.env.ANTHROPIC_API_KEY,
   };
 
-  const openaiFile    = resolveSection(fileConfig.openai);
+  const openaiFile = resolveSection(fileConfig.openai);
   const anthropicFile = resolveSection(fileConfig.anthropic);
 
   const merged: AiSdkOptions = {
@@ -123,13 +117,13 @@ export function loadThinyConfig(configPath?: string): ModelProvider {
 
   const openai = {
     baseURL: openaiEnv.baseURL ?? openaiFile?.baseURL,
-    apiKey:  openaiEnv.apiKey  ?? openaiFile?.apiKey,
+    apiKey: openaiEnv.apiKey ?? openaiFile?.apiKey,
   };
   if (openai.baseURL || openai.apiKey) merged.openai = openai;
 
   const anthropic = {
     baseURL: anthropicEnv.baseURL ?? anthropicFile?.baseURL,
-    apiKey:  anthropicEnv.apiKey  ?? anthropicFile?.apiKey,
+    apiKey: anthropicEnv.apiKey ?? anthropicFile?.apiKey,
   };
   if (anthropic.baseURL || anthropic.apiKey) merged.anthropic = anthropic;
 

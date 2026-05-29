@@ -12,13 +12,7 @@
 import { createInterface } from "node:readline/promises";
 import { stdin, stdout } from "node:process";
 import { z } from "zod";
-import {
-  createAgent,
-  defineTool,
-  modelAudit,
-  toolAudit,
-  budgetMiddleware,
-} from "@thiny/core";
+import { createAgent, defineTool, modelAudit, toolAudit, budgetMiddleware } from "@thiny/core";
 import { loadThinyConfig } from "@thiny/model-aisdk";
 import { webSearchPlugin } from "@thiny/plugin-web-search";
 
@@ -30,19 +24,24 @@ const echoTool = defineTool({
 });
 
 const logger = {
-  info:  (_o: unknown, _m?: string) => { /* silent in production — swap for pino */ },
-  warn:  (_o: unknown, m?: string)  => { console.error("[warn]",  m); },
-  error: (_o: unknown, m?: string)  => { console.error("[error]", m); },
-  child() { return logger; },
+  info: (_o: unknown, _m?: string) => {
+    /* silent in production — swap for pino */
+  },
+  warn: (_o: unknown, m?: string) => {
+    console.error("[warn]", m);
+  },
+  error: (_o: unknown, m?: string) => {
+    console.error("[error]", m);
+  },
+  child() {
+    return logger;
+  },
 };
 
 async function main() {
   const model = loadThinyConfig();
 
-  const activeModel =
-    process.env.THINY_MODEL ??
-    process.env.AGENT_MODEL ??
-    "openai:gpt-4o-mini";
+  const activeModel = process.env.THINY_MODEL ?? process.env.AGENT_MODEL ?? "openai:gpt-4o-mini";
 
   const plugins = [];
   if (process.env.BRAVE_API_KEY) {
@@ -79,7 +78,9 @@ async function main() {
     try {
       await agent.run(input, {
         sessionId: "cli",
-        onToken: (delta) => { process.stdout.write(delta); },
+        onToken: (delta) => {
+          process.stdout.write(delta);
+        },
       });
       stdout.write("\n");
     } catch (err: unknown) {

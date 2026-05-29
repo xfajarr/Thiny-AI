@@ -25,30 +25,29 @@ export interface RunLoopOptions {
  *   ⑤ validate      — Zod-parse LLM args before they reach execute()
  *   ⑥ error-as-obs  — failed tools feed back to the model, no crash
  */
-export async function runLoop(
-  input: string,
-  ctx: Ctx,
-  opts: RunLoopOptions = {},
-): Promise<string> {
+export async function runLoop(input: string, ctx: Ctx, opts: RunLoopOptions = {}): Promise<string> {
   const generate = opts.generate ?? ctx.model.generate.bind(ctx.model);
-  const runTool  = opts.runTool  ?? execTool;
+  const runTool = opts.runTool ?? execTool;
 
   const messages: Message[] = [...(opts.seed ?? []), { role: "user", content: input }];
   ctx.events.emit("onStart", { sessionId: ctx.sessionId });
 
-  for (let step = 0; step < ctx.maxSteps; step++) {        // ①
+  for (let step = 0; step < ctx.maxSteps; step++) {
+    // ①
     ctx.events.emit("beforeModelCall", { step, messages });
     const res = await generate(messages, ctx.tools.all()); // ② THINK
-    ctx.events.emit("afterModelCall",  { step, res });
+    ctx.events.emit("afterModelCall", { step, res });
 
     messages.push({ role: "assistant", content: res.text ?? "", toolCalls: res.toolCalls });
 
-    if (!res.toolCalls?.length) {                          // ③ DONE
+    if (!res.toolCalls?.length) {
+      // ③ DONE
       ctx.events.emit("onFinish", { step, text: res.text });
       return res.text ?? "";
     }
 
-    const results = await Promise.all(                     // ④ ACT (parallel)
+    const results = await Promise.all(
+      // ④ ACT (parallel)
       res.toolCalls.map(async (call) => {
         ctx.events.emit("beforeToolCall", { call });
         let content: string;
@@ -56,14 +55,14 @@ export async function runLoop(
           content = await runTool(ctx.tools.get(call.name), call.args, ctx); // ⑤
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
-          content = `ERROR: ${msg}`;                       // ⑥ error-as-observation
+          content = `ERROR: ${msg}`; // ⑥ error-as-observation
           ctx.events.emit("onError", { call, error: msg });
         }
         ctx.events.emit("afterToolCall", { call, content });
         return { role: "tool" as const, toolCallId: call.id, toolName: call.name, content };
       }),
     );
-    messages.push(...results);                             // ⑦ OBSERVE → loop
+    messages.push(...results); // ⑦ OBSERVE → loop
   }
 
   throw new MaxStepsError(ctx.maxSteps);

@@ -21,7 +21,9 @@ describe("ToolRegistry", () => {
   it("rejects duplicate names", () => {
     const r = new ToolRegistry();
     r.register(echo);
-    expect(() => { r.register(echo); }).toThrow(/already registered/);
+    expect(() => {
+      r.register(echo);
+    }).toThrow(/already registered/);
   });
 
   it("throws a clear error for unknown tools", () => {

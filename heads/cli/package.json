@@ -2,7 +2,9 @@
   "name": "@thiny/cli",
   "version": "0.1.0",
   "type": "module",
-  "bin": { "thiny": "./src/main.ts" },
+  "bin": {
+    "thiny": "./src/main.ts"
+  },
   "dependencies": {
     "@thiny/core": "workspace:*",
     "@thiny/model-aisdk": "workspace:*",

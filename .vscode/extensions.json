@@ -1,0 +1,33 @@
+{
+  "recommendations": [
+    // TypeScript
+    "ms-vscode.vscode-typescript-next",
+
+    // ESLint — shows lint errors inline as you type
+    "dbaeumer.vscode-eslint",
+
+    // Prettier — formats on save
+    "esbenp.prettier-vscode",
+
+    // Monorepo navigation
+    "folke.vscode-monorepo-workspace",
+
+    // Test runner — run/debug vitest tests inline
+    "vitest.explorer",
+
+    // Zod schema explorer (useful for tool parameters)
+    "marklel.vscode-zod",
+
+    // Git
+    "eamodio.gitlens",
+
+    // Markdown
+    "yzhang.markdown-all-in-one",
+
+    // Spell check for docs
+    "streetsidesoftware.code-spell-checker",
+
+    // AI assistance (optional)
+    "github.copilot"
+  ]
+}

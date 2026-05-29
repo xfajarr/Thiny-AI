@@ -4,7 +4,13 @@ import { aiSdkModel } from "../index.js";
 
 describe("aiSdkModel — model string resolution", () => {
   it("accepts a pre-built LanguageModel instance without resolving", () => {
-    const fakeModel: LanguageModel = { modelId: "fake", specificationVersion: "v1", provider: "test", defaultObjectGenerationMode: undefined, modelId: "fake" } as unknown as LanguageModel;
+    const fakeModel: LanguageModel = {
+      modelId: "fake",
+      specificationVersion: "v1",
+      provider: "test",
+      defaultObjectGenerationMode: undefined,
+      modelId: "fake",
+    } as unknown as LanguageModel;
     expect(() => aiSdkModel({ model: fakeModel })).not.toThrow();
   });
 

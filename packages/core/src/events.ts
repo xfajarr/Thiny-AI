@@ -28,7 +28,11 @@ export class EventBus {
 
   emit(event: KernelEvent, payload: unknown): void {
     for (const h of this.handlers.get(event) ?? []) {
-      try { h(payload); } catch { /* observability must never crash the agent */ }
+      try {
+        h(payload);
+      } catch {
+        /* observability must never crash the agent */
+      }
     }
   }
 }

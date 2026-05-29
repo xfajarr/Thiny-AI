@@ -16,15 +16,22 @@ describe("webSearchPlugin", () => {
   });
 
   it("returns normalised results from the API response", async () => {
-    const fakeFetch = vi.fn(async () =>
-      new Response(
-        JSON.stringify({
-          web: {
-            results: [{ title: "Thiny Docs", url: "https://thiny.dev", description: "Thin AI agent microkernel." }],
-          },
-        }),
-        { status: 200 },
-      ),
+    const fakeFetch = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            web: {
+              results: [
+                {
+                  title: "Thiny Docs",
+                  url: "https://thiny.dev",
+                  description: "Thin AI agent microkernel.",
+                },
+              ],
+            },
+          }),
+          { status: 200 },
+        ),
     );
     const tool = getTool("k", fakeFetch);
     const out = (await tool.execute({ query: "thiny agent", count: 1 }, {} as never)) as {
@@ -39,6 +46,8 @@ describe("webSearchPlugin", () => {
   it("throws a clear error on non-OK HTTP status", async () => {
     const fakeFetch = vi.fn(async () => new Response("", { status: 429 }));
     const tool = getTool("k", fakeFetch);
-    await expect(tool.execute({ query: "test", count: 1 }, {} as never)).rejects.toThrow(/HTTP 429/);
+    await expect(tool.execute({ query: "test", count: 1 }, {} as never)).rejects.toThrow(
+      /HTTP 429/,
+    );
   });
 });

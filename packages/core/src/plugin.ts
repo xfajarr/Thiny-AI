@@ -45,7 +45,7 @@ export async function loadPlugins(
     for (const t of p.tools ?? []) deps.registry.register(t);
     if (p.memory) collected.memory = p.memory;
     if (p.modelMiddleware) collected.middleware.model.push(...p.modelMiddleware);
-    if (p.toolMiddleware)  collected.middleware.tool.push(...p.toolMiddleware);
+    if (p.toolMiddleware) collected.middleware.tool.push(...p.toolMiddleware);
   }
 
   // Phase 2: setup

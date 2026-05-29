@@ -26,11 +26,20 @@ export function toolAudit(logger: Logger): ToolMiddleware {
     const t0 = Date.now();
     try {
       const result = await next(call);
-      logger.info({ kind: "tool_call", tool: call.tool.name, ms: Date.now() - t0, ok: true }, "tool_call");
+      logger.info(
+        { kind: "tool_call", tool: call.tool.name, ms: Date.now() - t0, ok: true },
+        "tool_call",
+      );
       return result;
     } catch (err) {
       logger.error(
-        { kind: "tool_call", tool: call.tool.name, ms: Date.now() - t0, ok: false, error: String(err) },
+        {
+          kind: "tool_call",
+          tool: call.tool.name,
+          ms: Date.now() - t0,
+          ok: false,
+          error: String(err),
+        },
         "tool_call_failed",
       );
       throw err;

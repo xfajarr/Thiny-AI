@@ -1,0 +1,62 @@
+{
+  // ── Formatting ───────────────────────────────────────────────────────────────
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": false,
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.wordWrap": "on"
+  },
+
+  // ── ESLint ───────────────────────────────────────────────────────────────────
+  "eslint.enable": true,
+  "eslint.validate": ["typescript"],
+  // Auto-fix on save (ESLint fixes what Prettier doesn't)
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  // Use the workspace ESLint (not a globally installed one)
+  "eslint.nodePath": "./node_modules",
+
+  // ── TypeScript ───────────────────────────────────────────────────────────────
+  // Use the workspace TS version, not the VS Code built-in
+  "typescript.tsdk": "./node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "typescript.preferences.quoteStyle": "double",
+  // Show inlay hints for return types and parameter names
+  "typescript.inlayHints.functionLikeReturnTypes.enabled": true,
+  "typescript.inlayHints.parameterNames.enabled": "literals",
+
+  // ── Files ────────────────────────────────────────────────────────────────────
+  "files.eol": "\n",
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  // Hide generated / irrelevant files from the explorer
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/.changeset/README.md": true,
+    "**/*.tsbuildinfo": true,
+    "**/coverage": true
+  },
+
+  // ── Search ───────────────────────────────────────────────────────────────────
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/coverage": true,
+    "pnpm-lock.yaml": true
+  },
+
+  // ── Vitest ───────────────────────────────────────────────────────────────────
+  "vitest.enable": true,
+  "vitest.commandLine": "pnpm exec vitest"
+}

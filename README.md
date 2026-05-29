@@ -12,7 +12,7 @@ npm create thiny@latest my-agent
 
 ## Why Thiny?
 
-Most agent frameworks (ElizaOS, Hermes, Hummingbot) are built to *run a product*. Thiny is built for builders who create agents repeatedly and need a core they fully own:
+Most agent frameworks (ElizaOS, Hermes, Hummingbot) are built to _run a product_. Thiny is built for builders who create agents repeatedly and need a core they fully own:
 
 - **Tiny by default.** The kernel is ~600 LOC. Read it in one sitting.
 - **Extend without touching the core.** Every capability is a plugin. Adding a new API, chain, or tool never requires editing the kernel.
@@ -44,29 +44,44 @@ Thiny works with any OpenAI-compatible or Anthropic-compatible API — no code c
 import { aiSdkModel } from "@thiny/model-aisdk";
 
 // OpenAI
-aiSdkModel({ model: "openai:gpt-4o-mini" })
+aiSdkModel({ model: "openai:gpt-4o-mini" });
 
 // Anthropic
-aiSdkModel({ model: "anthropic:claude-haiku-4-5-20251001" })
+aiSdkModel({ model: "anthropic:claude-haiku-4-5-20251001" });
 
 // Ollama (local, free)
-aiSdkModel({ model: "openai-compat:llama3", openai: { baseURL: "http://localhost:11434/v1", apiKey: "ollama" } })
+aiSdkModel({
+  model: "openai-compat:llama3",
+  openai: { baseURL: "http://localhost:11434/v1", apiKey: "ollama" },
+});
 
 // Groq
-aiSdkModel({ model: "openai-compat:llama-3.1-70b-versatile", openai: { baseURL: "https://api.groq.com/openai/v1", apiKey: process.env.GROQ_API_KEY } })
+aiSdkModel({
+  model: "openai-compat:llama-3.1-70b-versatile",
+  openai: { baseURL: "https://api.groq.com/openai/v1", apiKey: process.env.GROQ_API_KEY },
+});
 
 // Together AI
-aiSdkModel({ model: "openai-compat:meta-llama/Llama-3-70b-chat-hf", openai: { baseURL: "https://api.together.xyz/v1", apiKey: process.env.TOGETHER_API_KEY } })
+aiSdkModel({
+  model: "openai-compat:meta-llama/Llama-3-70b-chat-hf",
+  openai: { baseURL: "https://api.together.xyz/v1", apiKey: process.env.TOGETHER_API_KEY },
+});
 
 // OpenRouter (100+ models with one key)
-aiSdkModel({ model: "openai-compat:anthropic/claude-3.5-haiku", openai: { baseURL: "https://openrouter.ai/api/v1", apiKey: process.env.OPENROUTER_API_KEY } })
+aiSdkModel({
+  model: "openai-compat:anthropic/claude-3.5-haiku",
+  openai: { baseURL: "https://openrouter.ai/api/v1", apiKey: process.env.OPENROUTER_API_KEY },
+});
 
 // Any vLLM, llama.cpp, LM Studio, or Azure OpenAI endpoint
-aiSdkModel({ model: "openai-compat:my-model", openai: { baseURL: "https://my-server/v1", apiKey: "secret" } })
+aiSdkModel({
+  model: "openai-compat:my-model",
+  openai: { baseURL: "https://my-server/v1", apiKey: "secret" },
+});
 
 // Or pass any @ai-sdk LanguageModel directly
 import { groq } from "@ai-sdk/groq";
-aiSdkModel({ model: groq("llama-3.3-70b-versatile") })
+aiSdkModel({ model: groq("llama-3.3-70b-versatile") });
 ```
 
 The CLI head reads `OPENAI_BASE_URL` / `ANTHROPIC_BASE_URL` from `.env` automatically — see `.env.example` for all provider setups.
@@ -143,16 +158,17 @@ const agent = await createAgent({
     {
       name: "safety",
       modelMiddleware: [
-        modelAudit(logger),                                  // log every LLM call
+        modelAudit(logger), // log every LLM call
         budgetMiddleware({ maxCalls: 20, maxTokens: 100_000 }), // circuit breaker
       ],
       toolMiddleware: [
-        toolAudit(logger),                                   // log every tool call
-        policyMiddleware(myRules),                           // deterministic gate
+        toolAudit(logger), // log every tool call
+        policyMiddleware(myRules), // deterministic gate
       ],
     },
   ],
-  approver: async (req) => {                                 // human-in-the-loop
+  approver: async (req) => {
+    // human-in-the-loop
     const ans = await readline.question(`Approve ${req.tool}? [y/N] `);
     return ans.trim().toLowerCase() === "y";
   },
@@ -182,11 +198,11 @@ docs/
 
 ## Packages
 
-| Package | Description |
-|---|---|
-| `@thiny/core` | The microkernel: loop, registry, ports, middleware, plugin system |
-| `@thiny/model-aisdk` | Vercel AI SDK adapter (OpenAI, Anthropic, any `@ai-sdk` provider) |
-| `@thiny/plugin-web-search` | Web search via Brave Search API |
+| Package                    | Description                                                       |
+| -------------------------- | ----------------------------------------------------------------- |
+| `@thiny/core`              | The microkernel: loop, registry, ports, middleware, plugin system |
+| `@thiny/model-aisdk`       | Vercel AI SDK adapter (OpenAI, Anthropic, any `@ai-sdk` provider) |
+| `@thiny/plugin-web-search` | Web search via Brave Search API                                   |
 
 More packages arrive in later phases: `@thiny/memory-sqlite`, `@thiny/plugin-evm`, `@thiny/plugin-solana`, `@thiny/runtime` (autonomous scheduler), and more. See the [implementation plan](../thiny-implementation-plan.md).
 

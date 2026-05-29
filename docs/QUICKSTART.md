@@ -146,12 +146,12 @@ For a complete plugin authoring reference, see [PLUGINS.md](PLUGINS.md).
 
 ## What's next?
 
-| Goal | Where to look |
-|---|---|
-| Understand the architecture | [ARCHITECTURE.md](ARCHITECTURE.md) |
-| Build a full plugin | [PLUGINS.md](PLUGINS.md) |
+| Goal                                  | Where to look                                                     |
+| ------------------------------------- | ----------------------------------------------------------------- |
+| Understand the architecture           | [ARCHITECTURE.md](ARCHITECTURE.md)                                |
+| Build a full plugin                   | [PLUGINS.md](PLUGINS.md)                                          |
 | Add safety (policy, approval, budget) | [ARCHITECTURE.md — Safety](ARCHITECTURE.md#7-safety-architecture) |
-| Stream token-by-token | `agent.run(input, { onToken: (d) => process.stdout.write(d) })` |
-| Persist sessions (SQLite) | `@thiny/memory-sqlite` (Phase 4 of the plan) |
-| On-chain / DeFi | `@thiny/plugin-evm`, `@thiny/plugin-solana` (Phases 5, 13) |
-| Always-on autonomous agent | `@thiny/runtime` (Phase 9) |
+| Stream token-by-token                 | `agent.run(input, { onToken: (d) => process.stdout.write(d) })`   |
+| Persist sessions (SQLite)             | `@thiny/memory-sqlite` (Phase 4 of the plan)                      |
+| On-chain / DeFi                       | `@thiny/plugin-evm`, `@thiny/plugin-solana` (Phases 5, 13)        |
+| Always-on autonomous agent            | `@thiny/runtime` (Phase 9)                                        |
