@@ -5,6 +5,8 @@
     { "path": "packages/adapters/model-aisdk" },
     { "path": "packages/adapters/logger-pino" },
     { "path": "packages/adapters/memory-sqlite" },
+    { "path": "packages/adapters/signer-viem" },
+    { "path": "packages/plugins/evm" },
     { "path": "packages/agent" },
     { "path": "packages/eval" },
     { "path": "packages/plugins/web-search" }
