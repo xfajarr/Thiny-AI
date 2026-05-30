@@ -1,0 +1,12 @@
+{
+  "_comment": "Copy to thiny.config.json and fill in your values.",
+  "_comment2": "Use 'env:VAR_NAME' to reference environment variables (keeps secrets out of the file).",
+  "model": "openai:gpt-4o-mini",
+  "openai": {
+    "apiKey": "env:OPENAI_API_KEY"
+  },
+  "persona": {
+    "name": "ThinyAI",
+    "description": "a helpful AI assistant built on the Thiny framework"
+  }
+}
