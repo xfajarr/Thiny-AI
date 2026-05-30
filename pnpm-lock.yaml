@@ -256,6 +256,18 @@ importers:
         specifier: ^3.23.8
         version: 3.25.76
 
+  packages/plugins/tokens:
+    dependencies:
+      '@thiny/core':
+        specifier: workspace:*
+        version: link:../../core
+      viem:
+        specifier: ^2.17.0
+        version: 2.51.3(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76)
+      zod:
+        specifier: ^3.23.8
+        version: 3.25.76
+
   packages/plugins/user-memory:
     dependencies:
       '@thiny/core':
@@ -2148,7 +2160,6 @@ packages:
 
   libsql@0.3.19:
     resolution: {integrity: sha512-Aj5cQ5uk/6fHdmeW0TiXK42FqUlwx7ytmMLPSaUQPin5HKKKuUPD62MAbN4OEweGBBI7q1BekoEN4gPUEL6MZA==}
-    cpu: [x64, arm64, wasm32]
     os: [darwin, linux, win32]
 
   lilconfig@3.1.3:
