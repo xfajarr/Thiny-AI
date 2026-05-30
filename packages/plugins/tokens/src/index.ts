@@ -1,121 +1,19 @@
+/**
+ * @thiny/plugin-tokens — ERC-20 token operations plugin.
+ *
+ * File structure:
+ *   abi.ts    — ERC-20 ABI fragment + UINT256_MAX constant
+ *   rules.ts  — erc20ApproveRules (deterministic policy, no viem dep)
+ *   index.ts  — tokensPlugin factory + tools (this file)
+ */
+export { erc20ApproveRules } from "./rules.js";
+export type { Erc20ApproveLimits } from "./rules.js";
+
 import { z } from "zod";
 import { formatUnits, type PublicClient } from "viem";
-import { defineTool, type Tool, type Plugin, type PolicyRule } from "@thiny/core";
+import { defineTool, type Tool, type Plugin } from "@thiny/core";
 import type { Hex } from "@thiny/core";
-
-// ── ABI ───────────────────────────────────────────────────────────────────────
-
-const ERC20_ABI = [
-  {
-    name: "balanceOf",
-    type: "function",
-    inputs: [{ name: "account", type: "address" }],
-    outputs: [{ type: "uint256" }],
-    stateMutability: "view",
-  },
-  {
-    name: "decimals",
-    type: "function",
-    inputs: [],
-    outputs: [{ type: "uint8" }],
-    stateMutability: "view",
-  },
-  {
-    name: "symbol",
-    type: "function",
-    inputs: [],
-    outputs: [{ type: "string" }],
-    stateMutability: "view",
-  },
-  {
-    name: "allowance",
-    type: "function",
-    inputs: [
-      { name: "owner", type: "address" },
-      { name: "spender", type: "address" },
-    ],
-    outputs: [{ type: "uint256" }],
-    stateMutability: "view",
-  },
-  {
-    name: "approve",
-    type: "function",
-    inputs: [
-      { name: "spender", type: "address" },
-      { name: "amount", type: "uint256" },
-    ],
-    outputs: [{ type: "bool" }],
-    stateMutability: "nonpayable",
-  },
-  {
-    name: "transfer",
-    type: "function",
-    inputs: [
-      { name: "to", type: "address" },
-      { name: "amount", type: "uint256" },
-    ],
-    outputs: [{ type: "bool" }],
-    stateMutability: "nonpayable",
-  },
-] as const;
-
-const UNLIMITED = 2n ** 256n - 1n;
-
-// ── Policy rules ──────────────────────────────────────────────────────────────
-
-/** Limits for `erc20_approve`. */
-export interface Erc20ApproveLimits {
-  /** ERC-20 token addresses (lowercase) that may be approved. */
-  allowedTokens: string[];
-  /** Spender addresses (lowercase) that may receive approval. */
-  allowedSpenders: string[];
-  /** Maximum approval amount. Unlimited approvals (`2^256 - 1`) are always denied. */
-  maxApproveAmount: bigint;
-}
-
-/**
- * Policy rules for `erc20_approve`.
- *
- * Kills the "unlimited approval" footgun: even if the model requests
- * `type(uint256).max`, this rule denies it and explains why.
- */
-export function erc20ApproveRules(limits: Erc20ApproveLimits): PolicyRule[] {
-  const tokens = new Set(limits.allowedTokens.map((t) => t.toLowerCase()));
-  const spenders = new Set(limits.allowedSpenders.map((s) => s.toLowerCase()));
-
-  return [
-    (call) => {
-      if (call.tool.name !== "erc20_approve") return null;
-      const args = call.args as { token: string; spender: string; amount: string };
-      const amount = BigInt(args.amount);
-
-      if (amount >= UNLIMITED) {
-        return {
-          effect: "deny",
-          reason: "unlimited approval (2^256-1) is never permitted — use a specific amount",
-        };
-      }
-      if (amount > limits.maxApproveAmount) {
-        return {
-          effect: "deny",
-          reason: `amount ${String(amount)} exceeds cap ${String(limits.maxApproveAmount)}`,
-        };
-      }
-      if (!tokens.has(args.token.toLowerCase())) {
-        return { effect: "deny", reason: `token ${args.token} not on allowed token list` };
-      }
-      if (!spenders.has(args.spender.toLowerCase())) {
-        return { effect: "deny", reason: `spender ${args.spender} not on allowed spender list` };
-      }
-      return {
-        effect: "approve",
-        reason: `approve ${String(amount)} of ${args.token} to ${args.spender}`,
-      };
-    },
-  ];
-}
-
-// ── Individual tools (exported for composition) ───────────────────────────────
+import { ERC20_ABI, UINT256_MAX } from "./abi.js";
 
 const addressSchema = z
   .string()
@@ -133,8 +31,8 @@ function readContract(
 }
 
 /**
- * Read an ERC-20 token balance — returns raw wei, formatted amount, and symbol.
- * Exported so you can compose it into a custom plugin.
+ * Read the ERC-20 balance of a wallet — returns raw units, formatted amount, and symbol.
+ * Exported for composition in custom plugins.
  */
 export function erc20BalanceTool(client: PublicClient): Tool {
   return defineTool({
@@ -156,12 +54,9 @@ export function erc20BalanceTool(client: PublicClient): Tool {
   });
 }
 
-// ── Plugin factory ────────────────────────────────────────────────────────────
-
+/** Options for `tokensPlugin`. */
 export interface TokensPluginOptions {
-  /** viem public client for reading on-chain data. */
   publicClient: PublicClient;
-  /** Optional wallet client for write operations (approve, transfer). */
   walletClient?: { writeContract: (...args: unknown[]) => Promise<Hex> };
 }
 
@@ -169,33 +64,16 @@ export interface TokensPluginOptions {
  * ERC-20 token plugin.
  *
  * Tools:
- * - `erc20_balance` — read token balance (raw + formatted + symbol)
+ * - `erc20_balance`   — read token balance
  * - `erc20_allowance` — read current approval allowance
- * - `erc20_approve` — **sensitive** — approve spender (capped, unlimited denied)
- * - `erc20_transfer` — **sensitive** — transfer tokens
+ * - `erc20_approve`   — **sensitive** — approve spender (unlimited always denied)
+ * - `erc20_transfer`  — **sensitive** — transfer tokens
  *
- * Pair with `erc20ApproveRules` in `policyMiddleware` to enforce token
- * allowlists and amount caps, and to block unlimited approvals.
- *
- * @example
- * ```ts
- * import { tokensPlugin, erc20ApproveRules, policyMiddleware } from "@thiny/plugin-tokens";
- *
- * const agent = await createAgent({
- *   plugins: [
- *     tokensPlugin({ publicClient }),
- *     { name: "policy", toolMiddleware: [policyMiddleware(erc20ApproveRules({
- *       allowedTokens: [USDC_ADDRESS],
- *       allowedSpenders: [ROUTER_ADDRESS],
- *       maxApproveAmount: 1_000_000n,
- *     }))] },
- *   ],
- * });
- * ```
+ * Pair with `erc20ApproveRules` in `policyMiddleware` to enforce
+ * token allowlists and amount caps.
  */
 export function tokensPlugin(opts: TokensPluginOptions): Plugin {
   const { publicClient } = opts;
-
   return {
     name: "tokens",
     tools: [
@@ -226,7 +104,7 @@ export function tokensPlugin(opts: TokensPluginOptions): Plugin {
             raw: String(raw),
             formatted: formatUnits(raw, decimals),
             symbol,
-            isUnlimited: raw >= UNLIMITED,
+            isUnlimited: raw >= UINT256_MAX,
           };
         },
       }),
@@ -241,7 +119,7 @@ export function tokensPlugin(opts: TokensPluginOptions): Plugin {
         parameters: z.object({
           token: addressSchema.describe("token contract address"),
           spender: addressSchema.describe("spender to approve"),
-          amount: z.string().regex(/^\d+$/, "decimal token amount (not wei for readability)"),
+          amount: z.string().regex(/^\d+$/, "decimal token amount"),
         }),
         execute: async ({ token, spender, amount }, ctx) => {
           if (!opts.walletClient) throw new Error("erc20_approve: no walletClient configured");
@@ -266,7 +144,7 @@ export function tokensPlugin(opts: TokensPluginOptions): Plugin {
         parameters: z.object({
           token: addressSchema.describe("token contract address"),
           to: addressSchema.describe("recipient address"),
-          amount: z.string().regex(/^\d+$/, "decimal token amount"),
+          amount: z.string().regex(/^\d+$/),
         }),
         execute: async ({ token, to, amount }, ctx) => {
           if (!opts.walletClient) throw new Error("erc20_transfer: no walletClient configured");
