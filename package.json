@@ -24,7 +24,8 @@
     "version-packages": "changeset version",
     "release": "changeset publish",
     "build": "pnpm -r run build",
-    "build:check": "pnpm build && pnpm exec tsc -b"
+    "build:check": "pnpm build && pnpm exec tsc -b",
+    "trading-agent": "node --env-file=.env --import tsx heads/trading-agent/src/main.ts"
   },
   "devDependencies": {
     "@changesets/cli": "^2.31.0",

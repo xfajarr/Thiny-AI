@@ -11,6 +11,8 @@
     { "path": "packages/plugins/solana" },
     { "path": "packages/plugins/user-memory" },
     { "path": "packages/plugins/tokens" },
+    { "path": "packages/plugins/market" },
+    { "path": "packages/plugins/trading-policy" },
     { "path": "packages/agent" },
     { "path": "packages/eval" },
     { "path": "packages/runtime" },

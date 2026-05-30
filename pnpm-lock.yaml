@@ -117,6 +117,36 @@ importers:
         specifier: workspace:*
         version: link:../../packages/plugins/web-search
 
+  heads/trading-agent:
+    dependencies:
+      '@thiny/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@thiny/eval':
+        specifier: workspace:*
+        version: link:../../packages/eval
+      '@thiny/logger-pino':
+        specifier: workspace:*
+        version: link:../../packages/adapters/logger-pino
+      '@thiny/memory-sqlite':
+        specifier: workspace:*
+        version: link:../../packages/adapters/memory-sqlite
+      '@thiny/model-aisdk':
+        specifier: workspace:*
+        version: link:../../packages/adapters/model-aisdk
+      '@thiny/plugin-market':
+        specifier: workspace:*
+        version: link:../../packages/plugins/market
+      '@thiny/plugin-trading-policy':
+        specifier: workspace:*
+        version: link:../../packages/plugins/trading-policy
+      '@thiny/runtime':
+        specifier: workspace:*
+        version: link:../../packages/runtime
+      zod:
+        specifier: ^3.23.8
+        version: 3.25.76
+
   packages/adapters/logger-pino:
     dependencies:
       '@thiny/core':
@@ -244,6 +274,15 @@ importers:
         specifier: ^3.23.8
         version: 3.25.76
 
+  packages/plugins/market:
+    dependencies:
+      '@thiny/core':
+        specifier: workspace:*
+        version: link:../../core
+      zod:
+        specifier: ^3.23.8
+        version: 3.25.76
+
   packages/plugins/solana:
     dependencies:
       '@solana/web3.js':
@@ -264,6 +303,15 @@ importers:
       viem:
         specifier: ^2.17.0
         version: 2.51.3(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76)
+      zod:
+        specifier: ^3.23.8
+        version: 3.25.76
+
+  packages/plugins/trading-policy:
+    dependencies:
+      '@thiny/core':
+        specifier: workspace:*
+        version: link:../../core
       zod:
         specifier: ^3.23.8
         version: 3.25.76

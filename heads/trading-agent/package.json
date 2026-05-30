@@ -1,0 +1,19 @@
+{
+  "name": "@thiny/trading-agent",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "thiny-trading-agent": "./src/main.ts"
+  },
+  "dependencies": {
+    "@thiny/core": "workspace:*",
+    "@thiny/eval": "workspace:*",
+    "@thiny/logger-pino": "workspace:*",
+    "@thiny/memory-sqlite": "workspace:*",
+    "@thiny/model-aisdk": "workspace:*",
+    "@thiny/plugin-market": "workspace:*",
+    "@thiny/plugin-trading-policy": "workspace:*",
+    "@thiny/runtime": "workspace:*",
+    "zod": "^3.23.8"
+  }
+}
