@@ -22,7 +22,9 @@
     "prepare": "husky",
     "changeset": "changeset",
     "version-packages": "changeset version",
-    "release": "changeset publish"
+    "release": "changeset publish",
+    "build": "pnpm -r run build",
+    "build:check": "pnpm build && pnpm exec tsc -b"
   },
   "devDependencies": {
     "@changesets/cli": "^2.31.0",
@@ -35,6 +37,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^17.0.5",
     "prettier": "^3.8.3",
+    "tsup": "^8.5.1",
     "tsx": "^4.16.0",
     "typescript": "^5.5.0",
     "typescript-eslint": "^8.60.0",
