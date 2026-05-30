@@ -33,18 +33,25 @@ export interface BudgetOptions {
 }
 
 /**
+ * A budget middleware with a `reset()` method for clearing accumulated counters
+ * between turns. Call `reset()` before each `agent.run()` in a multi-turn REPL
+ * to enforce per-turn limits rather than session-wide totals.
+ */
+export type ResettableBudgetMiddleware = ModelMiddleware & { reset(): void };
+
+/**
  * Circuit-breaker middleware that terminates a run when a budget limit is exceeded.
  *
- * **Scope:** one `budgetMiddleware` instance tracks one agent run.
- * Create a fresh instance per run — do NOT share a single instance across runs
- * or the counters will accumulate.
+ * Returns a `ResettableBudgetMiddleware` — a standard `ModelMiddleware` with an
+ * extra `.reset()` method. Call `reset()` before each `agent.run()` in a REPL
+ * loop so limits are enforced per-turn, not accumulated across the entire session.
  *
  * **Failure mode:** throws `BudgetError` which is NOT fed back to the model as
  * an observation — the run is terminated immediately to prevent runaway costs.
  *
  * @throws {Error} When an option is provided but not a positive integer.
  *
- * @example
+ * @example single-run (plugin-level)
  * ```ts
  * plugins: [{
  *   name: "safety",
@@ -53,8 +60,18 @@ export interface BudgetOptions {
  *   ],
  * }]
  * ```
+ *
+ * @example multi-turn REPL (reset per turn)
+ * ```ts
+ * const budget = budgetMiddleware({ maxCalls: 50, maxTokens: 500_000, logger });
+ * // register budget in agent plugins once ...
+ * for (;;) {
+ *   budget.reset();           // reset counters before each user turn
+ *   await agent.run(input, { sessionId });
+ * }
+ * ```
  */
-export function budgetMiddleware(opts: BudgetOptions): ModelMiddleware {
+export function budgetMiddleware(opts: BudgetOptions): ResettableBudgetMiddleware {
   if (opts.maxTokens !== undefined && (opts.maxTokens <= 0 || !Number.isInteger(opts.maxTokens))) {
     throw new Error(
       `budgetMiddleware: maxTokens must be a positive integer, got ${String(opts.maxTokens)}`,
@@ -72,7 +89,7 @@ export function budgetMiddleware(opts: BudgetOptions): ModelMiddleware {
   let tokenWarnEmitted = false;
   let callWarnEmitted = false;
 
-  return async (req, next) => {
+  const mw: ModelMiddleware = async (req, next) => {
     // Pre-call checks — block before making the call.
     if (opts.maxCalls !== undefined && totalCalls >= opts.maxCalls) {
       throw new BudgetError(
@@ -123,10 +140,17 @@ export function budgetMiddleware(opts: BudgetOptions): ModelMiddleware {
     const response = await next(req);
 
     // Post-call: accumulate usage for future checks.
-    // The call that first tips over the token limit is allowed to complete;
-    // the following call will be blocked by the pre-call check above.
     totalTokens += (response.usage?.inputTokens ?? 0) + (response.usage?.outputTokens ?? 0);
 
     return response;
   };
+
+  return Object.assign(mw, {
+    reset(): void {
+      totalTokens = 0;
+      totalCalls = 0;
+      tokenWarnEmitted = false;
+      callWarnEmitted = false;
+    },
+  });
 }

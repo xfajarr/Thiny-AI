@@ -6,6 +6,7 @@
  *   PORT=3000 pnpm http
  */
 import { createServer } from "node:http";
+import { createClient } from "@libsql/client";
 import { createAgent } from "@thiny/core";
 import { loadThinyConfig } from "@thiny/model-aisdk";
 import { pinoLogger } from "@thiny/logger-pino";
@@ -26,10 +27,12 @@ async function main(): Promise<void> {
     plugins.push(webSearchPlugin({ apiKey: process.env.BRAVE_API_KEY }));
   }
 
+  const dbUrl = process.env.SESSION_DB ?? "file:thiny.sqlite";
+  const db = createClient({ url: dbUrl });
   const agent = await createAgent({
     model: loadThinyConfig(),
     logger,
-    memory: await sqliteMemory({ url: process.env.SESSION_DB ?? "file:thiny.sqlite" }),
+    memory: await sqliteMemory({ url: dbUrl }),
     persona,
     systemPrompt: "You are a helpful web-based AI assistant. Be concise and helpful.",
     plugins,
@@ -61,6 +64,61 @@ async function main(): Promise<void> {
 
       await streamChat(agent, input, sessionId ?? "web", (chunk) => res.write(chunk));
       res.end();
+      return;
+    }
+
+    // OPTIONS preflight for CORS
+    if (req.method === "OPTIONS") {
+      res.writeHead(204, {
+        "access-control-allow-origin": "*",
+        "access-control-allow-methods": "GET, POST, DELETE, OPTIONS",
+        "access-control-allow-headers": "content-type",
+      });
+      res.end();
+      return;
+    }
+
+    // GET /sessions — list all sessions with metadata
+    if (req.method === "GET" && req.url === "/sessions") {
+      res.setHeader("access-control-allow-origin", "*");
+      try {
+        const result = await db.execute(
+          "SELECT session, payload FROM transcripts ORDER BY rowid DESC LIMIT 100",
+        );
+        const sessions = result.rows.map((row) => {
+          const sessionId = row.session as string;
+          let messages: Array<{ role: string; content?: unknown }> = [];
+          try {
+            messages = JSON.parse(row.payload as string) as typeof messages;
+          } catch { /* ignore */ }
+          const lastMsg = [...messages]
+            .reverse()
+            .find((m) => m.role === "user" || m.role === "assistant");
+          const lastMessage =
+            lastMsg && typeof lastMsg.content === "string"
+              ? lastMsg.content.slice(0, 120)
+              : "";
+          return { id: sessionId, messageCount: messages.length, lastMessage, updatedAt: Date.now() };
+        });
+        res.writeHead(200, { "content-type": "application/json" });
+        res.end(JSON.stringify({ sessions }));
+      } catch (err) {
+        res.writeHead(500).end(JSON.stringify({ error: String(err) }));
+      }
+      return;
+    }
+
+    // DELETE /sessions/:id — remove a session
+    if (req.method === "DELETE" && req.url?.startsWith("/sessions/")) {
+      res.setHeader("access-control-allow-origin", "*");
+      const sessionId = decodeURIComponent(req.url.slice("/sessions/".length));
+      try {
+        await db.execute({ sql: "DELETE FROM transcripts WHERE session = ?", args: [sessionId] });
+        res.writeHead(200, { "content-type": "application/json" });
+        res.end(JSON.stringify({ deleted: true, id: sessionId }));
+      } catch (err) {
+        res.writeHead(500).end(JSON.stringify({ error: String(err) }));
+      }
       return;
     }
 

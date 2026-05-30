@@ -120,6 +120,11 @@ async function createSkillPlugin(
       return mcpPlugin({ command, args, name: env.MCP_NAME ?? "mcp" });
     }
 
+    case "agent-skills": {
+      const { agentSkillsPlugin } = await import("@thiny/plugin-agent-skills");
+      return agentSkillsPlugin({ cwd: process.cwd(), injectContext: true });
+    }
+
     default:
       return null; // Unknown skill IDs are caught by checkEnv() before reaching here
   }

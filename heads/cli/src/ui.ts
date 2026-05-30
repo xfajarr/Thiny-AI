@@ -5,7 +5,7 @@
 import figlet from "figlet";
 import chalk from "chalk";
 
-// ── Theme ──────────────────────────────────────────────────────────────────────
+// Theme
 
 const BRAND = chalk.cyan;
 const DIM = chalk.dim;
@@ -19,7 +19,7 @@ const ERROR_COLOR = chalk.red;
 const SUCCESS_COLOR = chalk.green;
 const SEPARATOR = DIM("─".repeat(getWidth()));
 
-// ── Helpers ────────────────────────────────────────────────────────────────────
+// Helpers
 
 export function getWidth(): number {
   return process.stdout.columns || 80;
@@ -39,7 +39,7 @@ function center(str: string, width: number): string {
   return " ".repeat(pad) + str;
 }
 
-// ── ASCII art header ───────────────────────────────────────────────────────────
+// ASCII art header
 
 export function renderHeader(opts: {
   model: string;
@@ -79,7 +79,7 @@ export function renderHeader(opts: {
   process.stdout.write("\n");
 }
 
-// ── Tools + Skills panel ───────────────────────────────────────────────────────
+// Tools + Skills panel
 
 export interface PanelEntry {
   label: string;
@@ -157,7 +157,7 @@ export function renderToolsAndSkills(tools: string[], skills: Map<string, string
   );
 }
 
-// ── Hints bar ─────────────────────────────────────────────────────────────────
+// Hints bar
 
 export function renderHints(logFile?: string): void {
   const logHint = logFile ? `  ·  ${DIM("logs →")} ${chalk.dim(logFile)}` : "";
@@ -177,7 +177,7 @@ export function renderHints(logFile?: string): void {
   );
 }
 
-// ── Message formatting ─────────────────────────────────────────────────────────
+// Message formatting
 
 export function renderUserMessage(text: string): void {
   process.stdout.write("\n" + USER_LABEL("You") + "\n");
@@ -216,7 +216,7 @@ export function renderWarning(message: string): void {
   process.stdout.write(chalk.yellow("⚠ ") + chalk.white(message) + "\n");
 }
 
-// ── Spinner ────────────────────────────────────────────────────────────────────
+// Spinner
 
 const SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 

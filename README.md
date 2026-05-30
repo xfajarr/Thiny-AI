@@ -1,6 +1,6 @@
 # Thiny
 
-**The thin, tiny core for AI agents — Web2 tools and Web3 actions.**
+**The thin, tiny core for AI agents with Web2 tools and Web3 actions.**
 
 A lightweight, plugin-based TypeScript microkernel for building production-ready AI agents. One kernel, any LLM, any chain.
 

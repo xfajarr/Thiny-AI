@@ -83,6 +83,11 @@ async function main(): Promise<void> {
     ? { name: process.env.THINY_PERSONA_NAME, description: process.env.THINY_PERSONA_DESCRIPTION }
     : undefined;
 
+  // Create budget middleware separately so we can reset it per turn.
+  // budgetMiddleware counters accumulate across calls — without reset() every
+  // subsequent turn in the REPL would count toward the same cap.
+  const budget = budgetMiddleware({ maxCalls: 50, logger });
+
   const agent = await createAgent({
     model,
     logger,
@@ -94,17 +99,14 @@ async function main(): Promise<void> {
     plugins: [
       {
         name: "observability",
-        modelMiddleware: [
-          modelAuditMiddleware(logger),
-          budgetMiddleware({ maxCalls: 50, maxTokens: 500_000, logger }),
-        ],
+        modelMiddleware: [modelAuditMiddleware(logger), budget],
         toolMiddleware: [toolAuditMiddleware(logger)],
       },
       ...skillPlugins,
     ],
   });
 
-  // ── Startup TUI ─────────────────────────────────────────────────────────────
+  // Startup TUI
   clearScreen();
   renderHeader({
     model: activeModelName,
@@ -138,7 +140,7 @@ async function main(): Promise<void> {
   renderHints(logFile);
   for (const w of skillWarnings) renderWarning(w);
 
-  // ── REPL ─────────────────────────────────────────────────────────────────────
+  // REPL
   const rl = createInterface({ input: stdin, output: stdout });
   const spinner = new Spinner();
 
@@ -191,6 +193,8 @@ async function main(): Promise<void> {
     renderUserMessage(trimmed);
     renderAgentLabel(personaName);
     spinner.start("thinking…");
+
+    budget.reset(); // reset per-turn counters before each run
 
     try {
       let firstToken = true;
