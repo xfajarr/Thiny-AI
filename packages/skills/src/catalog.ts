@@ -82,4 +82,11 @@ export const BUILTIN_SKILLS: SkillDefinition[] = [
     tags: ["mcp", "integration"],
     requiredEnv: ["MCP_COMMAND"],
   },
+  {
+    id: "agent-skills",
+    name: "Agent Skills",
+    description: "Understand, find, install, and create skills.sh compatible skills",
+    category: "ecosystem",
+    tags: ["skills", "skills.sh", "community", "find-skills"],
+  },
 ];
