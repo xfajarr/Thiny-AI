@@ -2,7 +2,6 @@ import { describe, it, expect } from "vitest";
 import { erc20BalanceTool, erc20ApproveRules } from "../index.js";
 import type { Tool, Ctx } from "@thiny/core";
 import type { PublicClient } from "viem";
-import type { Ctx } from "@thiny/core";
 
 const fakeClient: PublicClient = {
   readContract: async ({ functionName }: { functionName: string }) => {

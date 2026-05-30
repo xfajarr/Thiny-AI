@@ -122,8 +122,14 @@ const addressSchema = z
   .regex(/^0x[a-fA-F0-9]{40}$/)
   .transform((s) => s as Hex);
 
-function readContract(client: PublicClient, fn: string, address: Hex, ...args: unknown[]) {
-  return client.readContract({ address, abi: ERC20_ABI, functionName: fn, args });
+function readContract(
+  client: PublicClient,
+  fn: string,
+  address: string,
+  ...args: unknown[]
+): Promise<unknown> {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call
+  return (client.readContract as any)({ address, abi: ERC20_ABI, functionName: fn, args });
 }
 
 /**
@@ -141,9 +147,9 @@ export function erc20BalanceTool(client: PublicClient): Tool {
     }),
     execute: async ({ token, owner }) => {
       const [raw, decimals, symbol] = await Promise.all([
-        readContract(client, "balanceOf", token, owner) as Promise<bigint>,
-        readContract(client, "decimals", token) as Promise<number>,
-        readContract(client, "symbol", token) as Promise<string>,
+        readContract(client, "balanceOf", token, owner) as unknown as Promise<bigint>,
+        readContract(client, "decimals", token) as unknown as Promise<number>,
+        readContract(client, "symbol", token) as unknown as Promise<string>,
       ]);
       return { raw: String(raw), formatted: formatUnits(raw, decimals), symbol };
     },
@@ -206,9 +212,15 @@ export function tokensPlugin(opts: TokensPluginOptions): Plugin {
         }),
         execute: async ({ token, owner, spender }) => {
           const [raw, decimals, symbol] = await Promise.all([
-            readContract(publicClient, "allowance", token, owner, spender) as Promise<bigint>,
-            readContract(publicClient, "decimals", token) as Promise<number>,
-            readContract(publicClient, "symbol", token) as Promise<string>,
+            readContract(
+              publicClient,
+              "allowance",
+              token,
+              owner,
+              spender,
+            ) as unknown as Promise<bigint>,
+            readContract(publicClient, "decimals", token) as unknown as Promise<number>,
+            readContract(publicClient, "symbol", token) as unknown as Promise<string>,
           ]);
           return {
             raw: String(raw),

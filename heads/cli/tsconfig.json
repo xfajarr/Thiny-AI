@@ -7,6 +7,16 @@
     { "path": "../../packages/adapters/model-aisdk" },
     { "path": "../../packages/adapters/logger-pino" },
     { "path": "../../packages/adapters/memory-sqlite" },
-    { "path": "../../packages/plugins/web-search" }
+    { "path": "../../packages/adapters/mcp" },
+    { "path": "../../packages/adapters/signer-viem" },
+    { "path": "../../packages/plugins/web-search" },
+    { "path": "../../packages/plugins/evm" },
+    { "path": "../../packages/plugins/solana" },
+    { "path": "../../packages/plugins/market" },
+    { "path": "../../packages/plugins/tokens" },
+    { "path": "../../packages/plugins/trading-policy" },
+    { "path": "../../packages/plugins/knowledge" },
+    { "path": "../../packages/plugins/resilience" },
+    { "path": "../../packages/skills" }
   ]
 }

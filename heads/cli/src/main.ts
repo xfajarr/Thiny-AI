@@ -1,13 +1,10 @@
 /**
- * Thiny CLI head — an interactive terminal agent.
- *
- * Provider is resolved automatically from environment / thiny.config.json.
- * Zero code changes needed to switch models or providers.
+ * Thiny CLI — beautiful TUI with skills support.
  *
  * Usage:
  *   pnpm cli
- *   THINY_MODEL=anthropic:claude-haiku-4-5-20251001 pnpm cli
- *   THINY_MODEL=openai-compat:llama3 THINY_OPENAI_BASE_URL=http://localhost:11434/v1 pnpm cli
+ *   pnpm cli --skills web-search,evm
+ *   THINY_PERSONA_NAME=ThinyAI pnpm cli
  */
 import { createInterface } from "node:readline/promises";
 import { stdin, stdout } from "node:process";
@@ -22,7 +19,21 @@ import {
 import { loadThinyConfig } from "@thiny/model-aisdk";
 import { pinoLogger } from "@thiny/logger-pino";
 import { sqliteMemory } from "@thiny/memory-sqlite";
-import { webSearchPlugin } from "@thiny/plugin-web-search";
+import { defaultRegistry } from "@thiny/skills";
+import { loadSkills } from "./skills.js";
+import {
+  clearScreen,
+  renderHeader,
+  renderToolsAndSkills,
+  renderHints,
+  renderUserMessage,
+  renderAgentLabel,
+  renderAgentDone,
+  renderError,
+  renderInfo,
+  renderWarning,
+  Spinner,
+} from "./ui.js";
 
 const echoTool = defineTool({
   name: "echo",
@@ -31,33 +42,38 @@ const echoTool = defineTool({
   execute: ({ text }) => Promise.resolve({ echoed: text }),
 });
 
-async function main(): Promise<void> {
-  const logger = pinoLogger({
-    level: process.env.LOG_LEVEL ?? "info",
-    // Write structured audit log to file when AUDIT_LOG is set, e.g. AUDIT_LOG=audit.log
-    file: process.env.AUDIT_LOG,
-  });
+function parseSkillArgs(): string[] {
+  const args = process.argv.slice(2);
+  const idx = args.indexOf("--skills");
+  if (idx === -1) return [];
+  return (args[idx + 1] ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
 
-  // Resolve the active model name the same way loadThinyConfig() does,
-  // so the startup banner shows what is actually being used.
+let currentSessionId = `cli-${new Date().getTime().toString()}`;
+
+async function main(): Promise<void> {
+  // Logs go to stderr — never pollutes the TUI stdout
+  const logger = pinoLogger({ level: process.env.LOG_LEVEL ?? "warn", stderr: true });
+
   const activeModelName =
     process.env.THINY_MODEL ?? process.env.AGENT_MODEL ?? "openai:gpt-4o-mini";
+  const personaName = process.env.THINY_PERSONA_NAME ?? "Thiny";
   const model = loadThinyConfig();
 
-  // Persist sessions in SQLite so context survives process restarts.
-  const memory = await sqliteMemory({
-    url: process.env.SESSION_DB ?? "file:thiny.sqlite",
-  });
+  const memory = await sqliteMemory({ url: process.env.SESSION_DB ?? "file:thiny.sqlite" });
 
-  // Persona: reads from env vars first, then thiny.config.json
-  const personaName = process.env.THINY_PERSONA_NAME;
-  const personaDescription = process.env.THINY_PERSONA_DESCRIPTION;
-  const persona = personaName ? { name: personaName, description: personaDescription } : undefined;
+  const requestedSkillIds = parseSkillArgs();
+  const { plugins: skillPlugins, warnings: skillWarnings } = await loadSkills(
+    requestedSkillIds,
+    process.env,
+  );
 
-  const plugins = [];
-  if (process.env.BRAVE_API_KEY) {
-    plugins.push(webSearchPlugin({ apiKey: process.env.BRAVE_API_KEY }));
-  }
+  const persona = process.env.THINY_PERSONA_NAME
+    ? { name: process.env.THINY_PERSONA_NAME, description: process.env.THINY_PERSONA_DESCRIPTION }
+    : undefined;
 
   const agent = await createAgent({
     model,
@@ -65,8 +81,7 @@ async function main(): Promise<void> {
     memory,
     persona,
     systemPrompt:
-      "You are a helpful CLI assistant. Use tools when they help you answer better. " +
-      "Be concise.",
+      "You are a helpful AI assistant. Use tools when they help you answer better. Be concise.",
     tools: [echoTool],
     plugins: [
       {
@@ -77,34 +92,130 @@ async function main(): Promise<void> {
         ],
         toolMiddleware: [toolAuditMiddleware(logger)],
       },
-      ...plugins,
+      ...skillPlugins,
     ],
   });
 
+  // ── Startup TUI ─────────────────────────────────────────────────────────────
+  clearScreen();
+  renderHeader({
+    model: activeModelName,
+    session: currentSessionId,
+    persona: personaName,
+    version: "v0.1.0",
+  });
+
+  const registeredTools = agent.registry.all().map((t) => t.name);
+
+  // Build skills display: loaded skills → their tools; or show all available
+  const skillsByCategory = new Map<string, string[]>();
+  if (requestedSkillIds.length > 0) {
+    for (const id of requestedSkillIds) {
+      const def = defaultRegistry.all().find((s) => s.id === id);
+      if (!def) continue;
+      const existing = skillsByCategory.get(def.category) ?? [];
+      existing.push(def.id);
+      skillsByCategory.set(def.category, existing);
+    }
+  } else {
+    for (const [cat, defs] of defaultRegistry.byCategory()) {
+      skillsByCategory.set(
+        cat,
+        defs.map((d) => d.id),
+      );
+    }
+  }
+
+  renderToolsAndSkills(registeredTools, skillsByCategory);
+  renderHints();
+  for (const w of skillWarnings) renderWarning(w);
+
+  // ── REPL ─────────────────────────────────────────────────────────────────────
   const rl = createInterface({ input: stdin, output: stdout });
-  stdout.write(`Thiny agent ready  [model: ${activeModelName}]\n`);
-  stdout.write(`Sessions persisted in: ${process.env.SESSION_DB ?? "file:thiny.sqlite"}\n`);
-  stdout.write("Type a message and press Enter. Ctrl+C to quit.\n\n");
+  const spinner = new Spinner();
 
   for (;;) {
-    const input = await rl.question("> ");
-    if (!input.trim()) continue;
+    const input = await rl.question("\x1b[36mYou\x1b[0m \x1b[2m›\x1b[0m ");
+    const trimmed = input.trim();
+    if (!trimmed) continue;
+
+    if (trimmed.startsWith("/")) {
+      const parts = trimmed.slice(1).split(" ");
+      const cmd = parts[0];
+      // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
+      switch (cmd) {
+        case "new":
+          currentSessionId = `cli-${new Date().getTime().toString()}`;
+          renderInfo("New session started");
+          break;
+        case "tools":
+          renderInfo(
+            `\nTools:\n${agent.registry
+              .all()
+              .map((t) => `  • ${t.name}  ${t.description.slice(0, 55)}`)
+              .join("\n")}\n`,
+          );
+          break;
+        case "skills":
+          renderInfo("\nAvailable skills:");
+          for (const [cat, defs] of defaultRegistry.byCategory()) {
+            renderInfo(`  [${cat}]  ${defs.map((d) => d.id).join(", ")}`);
+          }
+          renderInfo("");
+          break;
+        case "session":
+          renderInfo(`Session: ${currentSessionId}`);
+          break;
+        case "clear":
+          clearScreen();
+          renderHeader({ model: activeModelName, session: currentSessionId, persona: personaName });
+          renderHints();
+          break;
+        case "help":
+          renderInfo("\n/new · /tools · /skills · /session · /clear · /help\n");
+          break;
+        default:
+          renderWarning(`Unknown command: /${cmd ?? ""}  — try /help`);
+      }
+      continue;
+    }
+
+    renderUserMessage(trimmed);
+    renderAgentLabel(personaName);
+    spinner.start("thinking…");
 
     try {
-      await agent.run(input, {
-        sessionId: "cli",
+      let firstToken = true;
+      const toolHandler = (payload: unknown): void => {
+        const { call } = payload as { call: { name: string } };
+        spinner.stop();
+        stdout.write(`  \x1b[33m⚙\x1b[0m \x1b[2m${call.name}\x1b[0m\n`);
+        spinner.start("running…");
+      };
+      agent.events.on("beforeToolCall", toolHandler);
+
+      await agent.run(trimmed, {
+        sessionId: currentSessionId,
         onToken: (delta) => {
-          process.stdout.write(delta);
+          if (firstToken) {
+            spinner.stop();
+            firstToken = false;
+          }
+          stdout.write(delta);
         },
       });
-      stdout.write("\n");
+
+      agent.events.off("beforeToolCall", toolHandler);
+      spinner.stop();
+      renderAgentDone();
     } catch (err: unknown) {
-      stdout.write(`\nerror: ${err instanceof Error ? err.message : String(err)}\n`);
+      spinner.stop();
+      renderError(err instanceof Error ? err.message : String(err));
     }
   }
 }
 
 main().catch((err: unknown) => {
-  console.error(err);
+  process.stderr.write(`Fatal: ${String(err)}\n`);
   process.exit(1);
 });

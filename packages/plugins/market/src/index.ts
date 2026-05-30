@@ -63,8 +63,9 @@ export function marketPlugin(opts: MarketPluginOptions = {}): Plugin {
           const data = (await res.json()) as Record<string, Record<string, number>>;
           const prices: Record<string, number> = {};
           for (const id of ids) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            const price = data[id]?.[currency];
+            const safeId = id;
+            const safeCurrency = currency ?? "usd";
+            const price = data[safeId]?.[safeCurrency];
             prices[id] = typeof price === "number" ? price : 0;
           }
           return { prices, currency, fetchedAt: new Date().toISOString() };

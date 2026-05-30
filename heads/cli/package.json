@@ -10,7 +10,19 @@
     "@thiny/logger-pino": "workspace:*",
     "@thiny/memory-sqlite": "workspace:*",
     "@thiny/model-aisdk": "workspace:*",
+    "@thiny/mcp": "workspace:*",
+    "@thiny/plugin-evm": "workspace:*",
+    "@thiny/plugin-knowledge": "workspace:*",
+    "@thiny/plugin-market": "workspace:*",
+    "@thiny/plugin-resilience": "workspace:*",
+    "@thiny/plugin-solana": "workspace:*",
+    "@thiny/plugin-tokens": "workspace:*",
+    "@thiny/plugin-trading-policy": "workspace:*",
     "@thiny/plugin-web-search": "workspace:*",
+    "@thiny/skills": "workspace:*",
+    "chalk": "^5.3.0",
+    "figlet": "^1.8.0",
+    "ora": "^8.1.0",
     "zod": "^3.23.8"
   }
 }
