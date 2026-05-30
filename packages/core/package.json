@@ -3,11 +3,7 @@
   "version": "0.1.0",
   "type": "module",
   "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts",
-      "default": "./src/index.ts"
-    }
+    ".": "./src/index.ts"
   },
   "dependencies": {
     "zod": "^3.23.8"
