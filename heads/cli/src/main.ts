@@ -55,8 +55,11 @@ function parseSkillArgs(): string[] {
 let currentSessionId = `cli-${new Date().getTime().toString()}`;
 
 async function main(): Promise<void> {
-  // Logs go to stderr — never pollutes the TUI stdout
-  const logger = pinoLogger({ level: process.env.LOG_LEVEL ?? "warn", stderr: true });
+  // In TUI mode, write all logs to a file so they never appear in the terminal.
+  // Both stdout and stderr map to the same TTY, so only a file truly hides them.
+  // Inspect logs with: tail -f ~/.thiny/cli.log
+  const logFile = process.env.THINY_LOG_FILE ?? `${process.env.HOME ?? "."}/thiny-cli.log`;
+  const logger = pinoLogger({ level: process.env.LOG_LEVEL ?? "info", file: logFile });
 
   const activeModelName =
     process.env.THINY_MODEL ?? process.env.AGENT_MODEL ?? "openai:gpt-4o-mini";
@@ -127,7 +130,7 @@ async function main(): Promise<void> {
   }
 
   renderToolsAndSkills(registeredTools, skillsByCategory);
-  renderHints();
+  renderHints(logFile);
   for (const w of skillWarnings) renderWarning(w);
 
   // ── REPL ─────────────────────────────────────────────────────────────────────
@@ -169,7 +172,7 @@ async function main(): Promise<void> {
         case "clear":
           clearScreen();
           renderHeader({ model: activeModelName, session: currentSessionId, persona: personaName });
-          renderHints();
+          renderHints(logFile);
           break;
         case "help":
           renderInfo("\n/new · /tools · /skills · /session · /clear · /help\n");
@@ -194,7 +197,7 @@ async function main(): Promise<void> {
       };
       agent.events.on("beforeToolCall", toolHandler);
 
-      await agent.run(trimmed, {
+      const reply = await agent.run(trimmed, {
         sessionId: currentSessionId,
         onToken: (delta) => {
           if (firstToken) {
@@ -207,6 +210,17 @@ async function main(): Promise<void> {
 
       agent.events.off("beforeToolCall", toolHandler);
       spinner.stop();
+
+      // If streaming emitted no tokens but agent returned text (non-streaming fallback),
+      // print it now. Also handle the case where model returned genuinely empty text.
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      if (firstToken) {
+        // Streaming emitted no tokens — print reply from blocking generate() fallback,
+        // or show a notice if the model returned nothing.
+
+        stdout.write(reply || "\x1b[2m(model returned empty response)\x1b[0m");
+      }
+
       renderAgentDone();
     } catch (err: unknown) {
       spinner.stop();

@@ -12,10 +12,11 @@ import type { Logger } from "@thiny/core";
  * it covers one-time adapter-level events (config discovery, parse warnings)
  * that happen outside of a running session.
  */
-const rawLogger = pino({
-  name: "@thiny/model-aisdk",
-  level: process.env.LOG_LEVEL ?? "info",
-});
+// Write to stderr (fd 2) so adapter logs never pollute a TUI stdout.
+const rawLogger = pino(
+  { name: "@thiny/model-aisdk", level: process.env.LOG_LEVEL ?? "info" },
+  pino.destination({ dest: 2, sync: false }),
+);
 
 export const adapterLogger: Logger = {
   info: (obj, msg) => {

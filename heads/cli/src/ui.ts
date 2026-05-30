@@ -159,16 +159,20 @@ export function renderToolsAndSkills(tools: string[], skills: Map<string, string
 
 // ── Hints bar ─────────────────────────────────────────────────────────────────
 
-export function renderHints(): void {
+export function renderHints(logFile?: string): void {
+  const logHint = logFile ? `  ·  ${DIM("logs →")} ${chalk.dim(logFile)}` : "";
   process.stdout.write(
     "\n" +
-      DIM("Type a message and press Enter  ·  ") +
+      DIM("Type a message  ·  ") +
       DIM("/new") +
-      chalk.dim(" — new session  ·  ") +
+      chalk.dim(" new session  ·  ") +
+      DIM("/skills") +
+      chalk.dim(" list skills  ·  ") +
       DIM("/tools") +
-      chalk.dim(" — list tools  ·  ") +
+      chalk.dim(" list tools  ·  ") +
       DIM("Ctrl+C") +
-      chalk.dim(" — quit") +
+      chalk.dim(" quit") +
+      logHint +
       "\n\n",
   );
 }
