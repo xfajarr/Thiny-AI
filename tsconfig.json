@@ -14,6 +14,7 @@
     { "path": "packages/plugins/market" },
     { "path": "packages/plugins/trading-policy" },
     { "path": "packages/plugins/resilience" },
+    { "path": "packages/plugins/knowledge" },
     { "path": "packages/agent" },
     { "path": "packages/eval" },
     { "path": "packages/runtime" },
