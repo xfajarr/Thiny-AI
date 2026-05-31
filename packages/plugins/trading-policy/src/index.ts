@@ -1,4 +1,4 @@
-import type { PolicyRule } from "@thiny/core";
+import { policyMiddleware, type PolicyRule, type Plugin } from "@thiny/core";
 
 const SWAP_TOOLS = new Set(["swap_execute", "sol_swap_execute", "erc20_approve", "erc20_transfer"]);
 
@@ -83,4 +83,20 @@ export function tradingPolicyRules(opts: TradingPolicyOptions): PolicyRule[] {
       };
     },
   ];
+}
+
+export default function (env: Record<string, string | undefined> = process.env): Plugin {
+  const allowedAssets = (env.ALLOWED_ASSETS ?? "").split(",").filter(Boolean);
+  return {
+    name: "trading-policy",
+    toolMiddleware: [
+      policyMiddleware(
+        tradingPolicyRules({
+          allowedAssets,
+          maxPositionSize: BigInt(env.MAX_POSITION_SIZE ?? "1000000"),
+          maxSlippageBps: Number(env.MAX_SLIPPAGE_BPS ?? "100"),
+        }),
+      ),
+    ],
+  };
 }

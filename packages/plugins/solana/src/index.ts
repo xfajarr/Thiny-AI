@@ -127,3 +127,7 @@ export function solanaPlugin(opts: SolanaPluginOptions = {}): Plugin {
     ],
   };
 }
+
+export default function (_env: Record<string, string | undefined> = process.env): Plugin {
+  return solanaPlugin({ cluster: "devnet" });
+}

@@ -141,3 +141,10 @@ export function evmPlugin(opts: EvmPluginOptions): Plugin {
     ],
   };
 }
+
+export default async function (env: Record<string, string | undefined> = process.env): Promise<Plugin> {
+  const { createPublicClient, http } = await import("viem");
+  const { sepolia } = await import("viem/chains");
+  const publicClient = createPublicClient({ chain: sepolia, transport: http(env.EVM_RPC_URL) });
+  return evmPlugin({ publicClient, chainId: 11155111, isTestnet: true });
+}

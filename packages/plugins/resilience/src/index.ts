@@ -1,5 +1,5 @@
 import type { z } from "zod";
-import type { ToolMiddleware, Agent } from "@thiny/core";
+import type { ToolMiddleware, Agent, Plugin } from "@thiny/core";
 
 // ── retry ─────────────────────────────────────────────────────────────────────
 
@@ -156,4 +156,11 @@ export async function runStructured<T>(
   if (!match)
     throw new Error(`runStructured: no JSON object found in response: "${text.slice(0, 100)}"`);
   return schema.parse(JSON.parse(match[0]));
+}
+
+export default function (_env: Record<string, string | undefined> = process.env): Plugin {
+  return {
+    name: "resilience",
+    toolMiddleware: [retry({ retries: 2, baseDelayMs: 500 }), timeout(30_000), toolCache()],
+  };
 }

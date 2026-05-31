@@ -114,3 +114,7 @@ export function marketPlugin(opts: MarketPluginOptions = {}): Plugin {
     ],
   };
 }
+
+export default function (_env: Record<string, string | undefined> = process.env): Plugin {
+  return marketPlugin();
+}

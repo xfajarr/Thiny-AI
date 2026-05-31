@@ -105,3 +105,7 @@ export function webSearchPlugin(opts: WebSearchOptions): Plugin {
     ],
   };
 }
+
+export default function (env: Record<string, string | undefined> = process.env): Plugin {
+  return webSearchPlugin({ apiKey: env.BRAVE_API_KEY ?? "" });
+}

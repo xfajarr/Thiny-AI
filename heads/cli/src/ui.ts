@@ -9,12 +9,8 @@ import chalk from "chalk";
 
 const BRAND = chalk.cyan;
 const DIM = chalk.dim;
-const BOLD = chalk.bold;
 const USER_LABEL = chalk.bold.white;
 const AGENT_LABEL = BRAND.bold;
-const TOOL_COLOR = chalk.yellow;
-const SKILL_CAT = chalk.cyan.bold;
-const SKILL_NAME = chalk.white;
 const ERROR_COLOR = chalk.red;
 const SUCCESS_COLOR = chalk.green;
 const SEPARATOR = DIM("─".repeat(getWidth()));
@@ -59,7 +55,7 @@ export function renderHeader(opts: {
 
   process.stdout.write("\n");
 
-  // Print title lines centered and colored
+  // Print title lines centered and colored (cyan)
   for (const line of title.split("\n")) {
     if (line.trim()) process.stdout.write(center(BRAND.bold(line), w) + "\n");
   }
@@ -68,15 +64,11 @@ export function renderHeader(opts: {
 
   // Info bar
   const version = opts.version ?? "v0.1.0";
-  const info = [
-    BRAND(`Thiny Agent ${version}`),
-    DIM("·"),
-    chalk.white(`Model: ${opts.model}`),
-    DIM("·"),
-    chalk.white(`Session: ${opts.session}`),
-  ].join("  ");
-  process.stdout.write(center(info, w) + "\n");
-  process.stdout.write("\n");
+  const infoText = ` ${opts.persona ?? "Thiny"} Agent ${version} `;
+  const remaining = Math.max(0, w - visibleLen(infoText));
+  const leftDash = "─".repeat(Math.floor(remaining / 2));
+  const rightDash = "─".repeat(remaining - leftDash.length);
+  process.stdout.write(BRAND(leftDash) + BRAND.bold(infoText) + BRAND(rightDash) + "\n\n");
 }
 
 // Tools + Skills panel
@@ -86,75 +78,73 @@ export interface PanelEntry {
   value: string;
 }
 
-export function renderToolsAndSkills(tools: string[], skills: Map<string, string[]>): void {
+export function renderToolsAndSkills(
+  tools: string[],
+  skills: Map<string, string[]>,
+  opts: { model: string; session: string; persona?: string },
+): void {
   const w = getWidth();
-  const halfW = Math.floor(w / 2) - 2;
+  
+  // Left column width: 25 columns
+  const leftColW = 25;
+  const leftLines: string[] = [
+    "",
+    center(BRAND.bold(opts.persona ?? "Thiny"), leftColW),
+    center(DIM(opts.model.slice(0, leftColW - 2)), leftColW),
+    center(DIM(`Session: ${opts.session.slice(-8)}`), leftColW),
+  ];
 
-  // Box top
-  process.stdout.write(
-    BRAND("┌") +
-      BRAND("─".repeat(halfW)) +
-      BRAND("┬") +
-      BRAND("─".repeat(w - halfW - 3)) +
-      BRAND("┐") +
-      "\n",
-  );
-
-  // Headers
-  process.stdout.write(
-    BRAND("│") +
-      padRight(BOLD(" Tools"), halfW) +
-      BRAND("│") +
-      padRight(BOLD(" Skills"), w - halfW - 3) +
-      BRAND("│") +
-      "\n",
-  );
-
-  // Divider
-  process.stdout.write(
-    BRAND("├") +
-      BRAND("─".repeat(halfW)) +
-      BRAND("┼") +
-      BRAND("─".repeat(w - halfW - 3)) +
-      BRAND("┤") +
-      "\n",
-  );
-
-  // Build rows: left = tools, right = skill entries
-  const toolLines = tools.map((t) => ` ${TOOL_COLOR("•")} ${chalk.white(t)}`);
-  if (toolLines.length === 0) toolLines.push(DIM(" (none)"));
-
-  const skillLines: string[] = [];
-  for (const [cat, names] of skills) {
-    const overflow = names.length - 4;
-    const display = names.slice(0, 4).join(", ") + (overflow > 0 ? `, +${String(overflow)}` : "");
-    skillLines.push(` ${SKILL_CAT(cat.padEnd(12))} ${SKILL_NAME(display)}`);
-  }
-  if (skillLines.length === 0) skillLines.push(DIM(" (none loaded — use --skills <id>)"));
-
-  const rows = Math.max(toolLines.length, skillLines.length);
-  for (let i = 0; i < rows; i++) {
-    const left = toolLines[i] ?? "";
-    const right = skillLines[i] ?? "";
-    process.stdout.write(
-      BRAND("│") +
-        padRight(left, halfW) +
-        BRAND("│") +
-        padRight(right, w - halfW - 3) +
-        BRAND("│") +
-        "\n",
-    );
+  // Right column lines
+  const toolGroups = new Map<string, string[]>();
+  for (const tool of tools) {
+    const idx = tool.indexOf("_");
+    const prefix = idx !== -1 ? tool.slice(0, idx) : "core";
+    const list = toolGroups.get(prefix) ?? [];
+    list.push(tool);
+    toolGroups.set(prefix, list);
   }
 
-  // Box bottom
-  process.stdout.write(
-    BRAND("└") +
-      BRAND("─".repeat(halfW)) +
-      BRAND("┴") +
-      BRAND("─".repeat(w - halfW - 3)) +
-      BRAND("┘") +
-      "\n",
-  );
+  const rightLines: string[] = [];
+  rightLines.push(BRAND.bold("Available Tools"));
+  for (const [prefix, names] of toolGroups) {
+    rightLines.push(`  ${BRAND(prefix)}: ${names.join(", ")}`);
+  }
+  rightLines.push("");
+  rightLines.push(BRAND.bold("Available Skills"));
+  
+  if (skills.size === 0) {
+    rightLines.push(`  ${DIM("(none loaded — use --skills <id>)")}`);
+  } else {
+    for (const [cat, names] of skills) {
+      rightLines.push(`  ${BRAND(cat)}: ${names.join(", ")}`);
+    }
+  }
+
+  // Draw side-by-side
+  const maxLines = Math.max(leftLines.length, rightLines.length);
+  
+  // Draw border top
+  process.stdout.write(BRAND("┌" + "─".repeat(w - 2) + "┐") + "\n");
+
+  for (let i = 0; i < maxLines; i++) {
+    const leftRaw = leftLines[i] ?? "";
+    const rightRaw = rightLines[i] ?? "";
+
+    // pad left column to leftColW
+    const leftPad = padRight(leftRaw, leftColW);
+    
+    // spacing between left and right column
+    const spacer = BRAND(" │ ");
+    
+    // pad right column to fill remaining space
+    const rightColW = w - leftColW - 7; // 2 borders (┌/┐) + 3 spacer ( │ ) = 5 plus margin
+    const rightPad = padRight(rightRaw, rightColW);
+
+    process.stdout.write(BRAND("│ ") + leftPad + spacer + rightPad + BRAND(" │") + "\n");
+  }
+
+  // Draw border bottom
+  process.stdout.write(BRAND("└" + "─".repeat(w - 2) + "┘") + "\n");
 }
 
 // Hints bar

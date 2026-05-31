@@ -115,7 +115,10 @@ async function main(): Promise<void> {
     version: "v0.1.0",
   });
 
-  const registeredTools = agent.registry.all().map((t) => t.name);
+  const registeredTools = agent.registry
+    .all()
+    .map((t) => t.name)
+    .filter((name) => name !== "echo");
 
   // Build skills display: loaded skills → their tools; or show all available
   const skillsByCategory = new Map<string, string[]>();
@@ -136,7 +139,11 @@ async function main(): Promise<void> {
     }
   }
 
-  renderToolsAndSkills(registeredTools, skillsByCategory);
+  renderToolsAndSkills(registeredTools, skillsByCategory, {
+    model: activeModelName,
+    session: currentSessionId,
+    persona: personaName,
+  });
   renderHints(logFile);
   for (const w of skillWarnings) renderWarning(w);
 
@@ -179,6 +186,11 @@ async function main(): Promise<void> {
         case "clear":
           clearScreen();
           renderHeader({ model: activeModelName, session: currentSessionId, persona: personaName });
+          renderToolsAndSkills(registeredTools, skillsByCategory, {
+            model: activeModelName,
+            session: currentSessionId,
+            persona: personaName,
+          });
           renderHints(logFile);
           break;
         case "help":

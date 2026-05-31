@@ -17,7 +17,8 @@ export { localEmbedder, randomEmbedder } from "./embedder.js";
 export type { Embedder } from "./embedder.js";
 
 // Plugin
-export { knowledgePlugin } from "./plugin.js";
+import { knowledgePlugin } from "./plugin.js";
+export { knowledgePlugin };
 export type { KnowledgePlugin, KnowledgePluginOptions } from "./plugin.js";
 
 /**
@@ -35,4 +36,10 @@ export async function freeKnowledgePlugin(opts: { topK?: number } = {}) {
     embedder = randomEmbedder();
   }
   return knowledgePlugin({ embedder, topK: opts.topK });
+}
+
+export default function (_env: Record<string, string | undefined> = process.env) {
+  const embedder = (texts: string[]): Promise<number[][]> =>
+    Promise.resolve(texts.map(() => Array.from({ length: 4 }, () => Math.random())));
+  return knowledgePlugin({ embedder });
 }

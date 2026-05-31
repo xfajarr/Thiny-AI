@@ -277,3 +277,7 @@ export function agentSkillsPlugin(opts: AgentSkillsPluginOptions = {}): Plugin {
     ],
   };
 }
+
+export default function (_env: Record<string, string | undefined> = process.env): Plugin {
+  return agentSkillsPlugin({ cwd: process.cwd(), injectContext: true });
+}

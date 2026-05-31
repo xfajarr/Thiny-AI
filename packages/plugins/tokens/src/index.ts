@@ -164,3 +164,10 @@ export function tokensPlugin(opts: TokensPluginOptions): Plugin {
     ],
   };
 }
+
+export default async function (env: Record<string, string | undefined> = process.env): Promise<Plugin> {
+  const { createPublicClient, http } = await import("viem");
+  const { sepolia } = await import("viem/chains");
+  const publicClient = createPublicClient({ chain: sepolia, transport: http(env.EVM_RPC_URL) });
+  return tokensPlugin({ publicClient });
+}

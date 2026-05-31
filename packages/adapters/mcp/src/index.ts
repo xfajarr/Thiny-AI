@@ -99,3 +99,9 @@ export async function mcpPlugin(opts: McpStdioOptions): Promise<McpPlugin> {
     },
   };
 }
+
+export default function (env: Record<string, string | undefined> = process.env): Promise<Plugin> {
+  const command = env.MCP_COMMAND ?? "npx";
+  const args = (env.MCP_ARGS ?? "").split(" ").filter(Boolean);
+  return mcpPlugin({ command, args, name: env.MCP_NAME ?? "mcp" });
+}
