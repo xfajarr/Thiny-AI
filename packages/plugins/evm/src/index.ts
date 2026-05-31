@@ -109,6 +109,7 @@ export function evmPlugin(opts: EvmPluginOptions): Plugin {
           "SENSITIVE: requires policy approval. Always confirm the destination and amount. " +
           "Only operates on testnet unless explicitly configured otherwise.",
         sensitive: true,
+        locks: ["evm:write"],
         parameters: z.object({
           to: addressSchema.describe("recipient address"),
           valueWei: z.string().regex(/^\d+$/, "must be a decimal wei amount"),

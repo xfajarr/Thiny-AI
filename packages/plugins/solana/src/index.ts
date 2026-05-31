@@ -92,6 +92,7 @@ export function solanaPlugin(opts: SolanaPluginOptions = {}): Plugin {
           "SENSITIVE: requires policy approval. Always confirm the destination and amount. " +
           "Only operates on devnet — never mainnet.",
         sensitive: true,
+        locks: ["solana:write"],
         parameters: z.object({
           to: z.string().min(32).max(44).describe("base58 recipient public key"),
           lamports: z.string().regex(/^\d+$/, "must be a decimal lamport amount"),

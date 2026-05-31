@@ -160,4 +160,91 @@ describe("runLoop", () => {
     };
     await expect(runLoop("loop", makeCtx(model, tools))).rejects.toThrow(/exceeded the maximum/);
   });
+
+  it("serializes conflicting tool executions via resource locks while running others in parallel", async () => {
+    const tools = new ToolRegistry();
+    const runOrder: string[] = [];
+    let concurrentLocks = 0;
+    let maxConcurrentLocks = 0;
+
+    tools.register(
+      defineTool({
+        name: "locked_a",
+        description: "",
+        parameters: z.object({}),
+        locks: ["resource_1"],
+        execute: async () => {
+          concurrentLocks++;
+          maxConcurrentLocks = Math.max(maxConcurrentLocks, concurrentLocks);
+          runOrder.push("start:locked_a");
+          await new Promise((r) => setTimeout(r, 20));
+          runOrder.push("end:locked_a");
+          concurrentLocks--;
+        },
+      }),
+    );
+
+    tools.register(
+      defineTool({
+        name: "locked_b",
+        description: "",
+        parameters: z.object({}),
+        locks: ["resource_1"],
+        execute: async () => {
+          concurrentLocks++;
+          maxConcurrentLocks = Math.max(maxConcurrentLocks, concurrentLocks);
+          runOrder.push("start:locked_b");
+          await new Promise((r) => setTimeout(r, 20));
+          runOrder.push("end:locked_b");
+          concurrentLocks--;
+        },
+      }),
+    );
+
+    tools.register(
+      defineTool({
+        name: "unlocked",
+        description: "",
+        parameters: z.object({}),
+        execute: async () => {
+          runOrder.push("start:unlocked");
+          await new Promise((r) => setTimeout(r, 5));
+          runOrder.push("end:unlocked");
+        },
+      }),
+    );
+
+    let step = 0;
+    const model: ModelProvider = {
+      generate: (): Promise<ModelResponse> => {
+        step++;
+        if (step === 1) {
+          return Promise.resolve({
+            finishReason: "tool_calls",
+            toolCalls: [
+              { id: "c1", name: "locked_a", args: {} },
+              { id: "c2", name: "locked_b", args: {} },
+              { id: "c3", name: "unlocked", args: {} },
+            ],
+          });
+        }
+        return Promise.resolve({ text: "done", finishReason: "stop" });
+      },
+    };
+
+    await runLoop("run tools", makeCtx(model, tools));
+
+    // Verify the exact run order demonstrating concurrency and locking
+    expect(runOrder).toEqual([
+      "start:locked_a",
+      "start:unlocked",
+      "end:unlocked",
+      "end:locked_a",
+      "start:locked_b",
+      "end:locked_b",
+    ]);
+
+    // Locked tools must not execute concurrently. Max concurrent locks must be exactly 1.
+    expect(maxConcurrentLocks).toBe(1);
+  });
 });

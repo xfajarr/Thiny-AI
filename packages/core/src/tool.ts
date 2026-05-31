@@ -44,6 +44,11 @@ export interface Tool<A = unknown> {
   /** Optional tags for filtering, policy rules, and observability. */
   tags?: string[];
   /**
+   * Optional resource locks (concurrency groups).
+   * Tool calls sharing any lock key will be serialized rather than executed concurrently.
+   */
+  locks?: string[];
+  /**
    * Execute the tool with validated arguments.
    *
    * @param args - Already validated by `parameters.parse()`. The type matches `A`.

@@ -94,10 +94,50 @@ export async function runLoop(
       return { text, messages };
     }
 
-    // ④ ACT — execute every requested tool in parallel
-    const toolResults = await Promise.all(
-      response.toolCalls.map((call) => executeToolCall(call, runTool, ctx)), // ⑤ validates inside
-    );
+    // ④ ACT — execute every requested tool, serializing those with conflicting resource locks
+    const lockPromises = new Map<string, Promise<void>>();
+    const toolResults: Array<Message & { role: "tool" }> = [];
+
+    const promises = response.toolCalls.map(async (call, index) => {
+      const tool = ctx.tools.get(call.name);
+      const locks = tool.locks ?? [];
+
+      const acquireLocks = async (): Promise<() => void> => {
+        for (;;) {
+          const conflicting = locks
+            .map((lock) => lockPromises.get(lock))
+            .filter((p): p is Promise<void> => p !== undefined);
+
+          if (conflicting.length === 0) {
+            let resolve: () => void;
+            const promise = new Promise<void>((r) => {
+              resolve = r;
+            });
+            locks.forEach((lock) => lockPromises.set(lock, promise));
+            return () => {
+              locks.forEach((lock) => {
+                if (lockPromises.get(lock) === promise) {
+                  lockPromises.delete(lock);
+                }
+              });
+              resolve();
+            };
+          }
+
+          await Promise.race(conflicting);
+        }
+      };
+
+      const releaseLocks = await acquireLocks();
+      try {
+        const res = await executeToolCall(call, runTool, ctx);
+        toolResults[index] = res;
+      } finally {
+        releaseLocks();
+      }
+    });
+
+    await Promise.all(promises);
 
     messages.push(...toolResults); // ⑦ OBSERVE → loop back
   }

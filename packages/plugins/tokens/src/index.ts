@@ -116,6 +116,7 @@ export function tokensPlugin(opts: TokensPluginOptions): Plugin {
           "SENSITIVE: requires policy approval. " +
           "NEVER use unlimited amounts — always specify the exact amount needed.",
         sensitive: true,
+        locks: ["evm:write"],
         parameters: z.object({
           token: addressSchema.describe("token contract address"),
           spender: addressSchema.describe("spender to approve"),
@@ -141,6 +142,7 @@ export function tokensPlugin(opts: TokensPluginOptions): Plugin {
         name: "erc20_transfer",
         description: "Transfer ERC-20 tokens to an address. SENSITIVE: requires policy approval.",
         sensitive: true,
+        locks: ["evm:write"],
         parameters: z.object({
           token: addressSchema.describe("token contract address"),
           to: addressSchema.describe("recipient address"),
