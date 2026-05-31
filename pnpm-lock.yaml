@@ -304,6 +304,15 @@ importers:
         specifier: ^9.2.0
         version: 9.14.0
 
+  packages/adapters/otel:
+    dependencies:
+      '@opentelemetry/api':
+        specifier: ^1.9.0
+        version: 1.9.0
+      '@thiny/core':
+        specifier: workspace:*
+        version: link:../../core
+
   packages/adapters/signer-viem:
     dependencies:
       '@thiny/core':

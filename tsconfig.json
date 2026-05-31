@@ -7,6 +7,7 @@
     { "path": "packages/adapters/memory-sqlite" },
     { "path": "packages/adapters/signer-viem" },
     { "path": "packages/adapters/mcp" },
+    { "path": "packages/adapters/otel" },
     { "path": "packages/plugins/evm" },
     { "path": "packages/plugins/solana" },
     { "path": "packages/plugins/user-memory" },
