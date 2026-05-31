@@ -1,11 +1,39 @@
 {
   "name": "@thiny/skills",
   "version": "0.1.0",
+  "description": "Thiny AI — lightweight skill metadata registry",
   "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thiny-ai/thiny",
+    "directory": "packages/skills"
+  },
   "exports": {
     ".": "./src/index.ts"
   },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js"
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --config ../../tsup.config.ts"
+  },
   "dependencies": {
     "@thiny/core": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.1",
+    "typescript": "^5.5.0"
   }
 }

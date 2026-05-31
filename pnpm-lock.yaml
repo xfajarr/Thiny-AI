@@ -286,6 +286,15 @@ importers:
         specifier: workspace:*
         version: link:../../core
 
+  packages/adapters/memory-vec:
+    dependencies:
+      '@thiny/core':
+        specifier: workspace:*
+        version: link:../../core
+      zod:
+        specifier: ^3.23.8
+        version: 3.25.76
+
   packages/adapters/model-aisdk:
     dependencies:
       '@ai-sdk/anthropic':

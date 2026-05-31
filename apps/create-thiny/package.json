@@ -1,11 +1,31 @@
 {
   "name": "create-thiny",
   "version": "0.1.0",
+  "description": "Scaffold a new Thiny AI agent project",
   "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thiny-ai/thiny",
+    "directory": "apps/create-thiny"
+  },
   "bin": {
-    "create-thiny": "./src/index.ts"
+    "create-thiny": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "bin": {
+      "create-thiny": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup"
   },
   "devDependencies": {
+    "tsup": "^8.5.1",
     "typescript": "^5.5.0"
   }
 }

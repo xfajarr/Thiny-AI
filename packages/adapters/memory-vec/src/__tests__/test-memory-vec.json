@@ -1,0 +1,10 @@
+[
+  {
+    "text": "cats are felines",
+    "embedding": [1, 0]
+  },
+  {
+    "text": "dogs bark",
+    "embedding": [0, 1]
+  }
+]

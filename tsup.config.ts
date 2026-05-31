@@ -13,12 +13,16 @@ import { defineConfig } from "tsup";
 export default defineConfig({
   entry: ["src/index.ts"],
   format: ["esm"],
-  dts: true,
+  dts: {
+    compilerOptions: {
+      composite: false,
+    },
+  },
   clean: true,
   sourcemap: true,
   splitting: false,
   // External: don't bundle workspace siblings — they're peerDependencies
-  external: [/^@thiny\//],
+  external: [/^@thiny\//, "@xenova/transformers"],
   esbuildOptions(options) {
     // Ensure __dirname/__filename are not used (ESM)
     options.platform = "node";

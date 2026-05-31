@@ -247,4 +247,117 @@ describe("runLoop", () => {
     // Locked tools must not execute concurrently. Max concurrent locks must be exactly 1.
     expect(maxConcurrentLocks).toBe(1);
   });
+
+  it("releases locks correctly even when a locked tool throws an error", async () => {
+    const tools = new ToolRegistry();
+    const runOrder: string[] = [];
+
+    tools.register(
+      defineTool({
+        name: "failing_locked",
+        description: "",
+        parameters: z.object({}),
+        locks: ["resource_fail"],
+        execute: async () => {
+          runOrder.push("start:failing_locked");
+          await new Promise((r) => setTimeout(r, 10));
+          runOrder.push("fail:failing_locked");
+          throw new Error("locked tool failed");
+        },
+      }),
+    );
+
+    tools.register(
+      defineTool({
+        name: "subsequent_locked",
+        description: "",
+        parameters: z.object({}),
+        locks: ["resource_fail"],
+        execute: async () => {
+          runOrder.push("start:subsequent_locked");
+          await new Promise((r) => setTimeout(r, 10));
+          runOrder.push("end:subsequent_locked");
+        },
+      }),
+    );
+
+    let step = 0;
+    const model: ModelProvider = {
+      generate: (): Promise<ModelResponse> => {
+        step++;
+        if (step === 1) {
+          return Promise.resolve({
+            finishReason: "tool_calls",
+            toolCalls: [
+              { id: "c1", name: "failing_locked", args: {} },
+              { id: "c2", name: "subsequent_locked", args: {} },
+            ],
+          });
+        }
+        return Promise.resolve({ text: "done", finishReason: "stop" });
+      },
+    };
+
+    await runLoop("run error tools", makeCtx(model, tools));
+
+    // Verify subsequent runs even though the first one failed
+    expect(runOrder).toEqual([
+      "start:failing_locked",
+      "fail:failing_locked",
+      "start:subsequent_locked",
+      "end:subsequent_locked",
+    ]);
+  });
+
+  it("handles duplicate lock keys and empty lock arrays gracefully", async () => {
+    const tools = new ToolRegistry();
+    const runOrder: string[] = [];
+
+    tools.register(
+      defineTool({
+        name: "dupe_locks",
+        description: "",
+        parameters: z.object({}),
+        locks: ["res", "res"], // duplicate
+        execute: async () => {
+          runOrder.push("start:dupe");
+          runOrder.push("end:dupe");
+        },
+      }),
+    );
+
+    tools.register(
+      defineTool({
+        name: "empty_locks",
+        description: "",
+        parameters: z.object({}),
+        locks: [], // empty
+        execute: async () => {
+          runOrder.push("start:empty");
+          runOrder.push("end:empty");
+        },
+      }),
+    );
+
+    let step = 0;
+    const model: ModelProvider = {
+      generate: (): Promise<ModelResponse> => {
+        step++;
+        if (step === 1) {
+          return Promise.resolve({
+            finishReason: "tool_calls",
+            toolCalls: [
+              { id: "c1", name: "dupe_locks", args: {} },
+              { id: "c2", name: "empty_locks", args: {} },
+            ],
+          });
+        }
+        return Promise.resolve({ text: "done", finishReason: "stop" });
+      },
+    };
+
+    await runLoop("run edge case tools", makeCtx(model, tools));
+    expect(runOrder).toContain("start:dupe");
+    expect(runOrder).toContain("start:empty");
+  });
 });

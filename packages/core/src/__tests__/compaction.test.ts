@@ -92,4 +92,82 @@ describe("compactionMiddleware", () => {
     });
     expect(calledWith.messages[2]).toEqual({ role: "assistant", content: "b".repeat(100) });
   });
+
+  it("handles empty message history gracefully", async () => {
+    const middleware = compactionMiddleware({
+      maxMessages: 3,
+      keepRecent: 1,
+      summarizer: mockSummarizer("empty"),
+    });
+
+    const next = vi
+      .fn()
+      .mockImplementation((req) => Promise.resolve({ text: "ok", messages: req.messages }));
+    await middleware({ messages: [], tools: [] }, next);
+    expect(next).toHaveBeenCalledWith({ messages: [], tools: [] });
+  });
+
+  it("handles messages with zero tokens/empty strings", async () => {
+    const middleware = compactionMiddleware({
+      maxTokens: 10,
+      keepRecent: 1,
+      summarizer: mockSummarizer("summary"),
+    });
+
+    const next = vi
+      .fn()
+      .mockImplementation((req) => Promise.resolve({ text: "ok", messages: req.messages }));
+    const initialMessages: Message[] = [
+      { role: "system", content: "" },
+      { role: "user", content: "   " },
+      { role: "assistant", content: "" },
+    ];
+
+    await middleware({ messages: initialMessages, tools: [] }, next);
+    expect(next).toHaveBeenCalled();
+    const calledWith = next.mock.calls[0][0] as { messages: Message[] };
+    expect(calledWith.messages).toHaveLength(3);
+  });
+
+  it("handles keepRecent larger than total history gracefully by keeping all messages", async () => {
+    const middleware = compactionMiddleware({
+      maxMessages: 2,
+      keepRecent: 10,
+      summarizer: mockSummarizer("summary"),
+    });
+
+    const next = vi
+      .fn()
+      .mockImplementation((req) => Promise.resolve({ text: "ok", messages: req.messages }));
+    const initialMessages: Message[] = [
+      { role: "system", content: "sys" },
+      { role: "user", content: "hello" },
+    ];
+
+    await middleware({ messages: initialMessages, tools: [] }, next);
+    expect(next).toHaveBeenCalledWith({ messages: initialMessages, tools: [] });
+  });
+
+  it("handles a single message that exceeds the maxTokens limit on its own", async () => {
+    const middleware = compactionMiddleware({
+      maxTokens: 5,
+      keepRecent: 1,
+      summarizer: mockSummarizer("summary of giant message"),
+    });
+
+    const next = vi
+      .fn()
+      .mockImplementation((req) => Promise.resolve({ text: "ok", messages: req.messages }));
+    const initialMessages: Message[] = [
+      { role: "system", content: "sys prompt" },
+      { role: "user", content: "giant message content extremely long text".repeat(10) },
+    ];
+
+    await middleware({ messages: initialMessages, tools: [] }, next);
+    expect(next).toHaveBeenCalled();
+    const calledWith = next.mock.calls[0][0] as { messages: Message[] };
+    expect(calledWith.messages.length).toBe(3);
+    expect(calledWith.messages[0]?.role).toBe("system");
+    expect(calledWith.messages[1]?.content).toContain("summary of giant message");
+  });
 });
