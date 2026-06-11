@@ -1,12 +1,12 @@
 {
   "name": "@thiny/cli",
   "version": "0.1.0",
-  "description": "Thiny AI — beautiful TUI agent CLI",
+  "description": "Thiny AI — beautiful TUI agent CLI with interactive chat and tool execution",
   "type": "module",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/thiny-ai/thiny",
+    "url": "git+https://github.com/thiny-ai/thiny.git",
     "directory": "heads/cli"
   },
   "bin": {
@@ -19,7 +19,8 @@
     "access": "public",
     "bin": {
       "thiny": "./dist/main.js"
-    }
+    },
+    "provenance": true
   },
   "scripts": {
     "build": "tsup"
@@ -49,5 +50,23 @@
   "devDependencies": {
     "tsup": "^8.5.1",
     "typescript": "^5.5.0"
-  }
+  },
+  "author": "Thiny AI",
+  "engines": {
+    "node": ">=20"
+  },
+  "sideEffects": false,
+  "homepage": "https://github.com/thiny-ai/thiny/tree/main/heads/cli#readme",
+  "bugs": {
+    "url": "https://github.com/thiny-ai/thiny/issues"
+  },
+  "keywords": [
+    "ai-agent",
+    "llm",
+    "thiny",
+    "cli",
+    "tui",
+    "terminal",
+    "interactive"
+  ]
 }

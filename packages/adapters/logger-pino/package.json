@@ -25,6 +25,31 @@
         "types": "./dist/index.d.ts",
         "import": "./dist/index.js"
       }
-    }
-  }
+    },
+    "provenance": true
+  },
+  "license": "MIT",
+  "author": "Thiny AI",
+  "description": "Thiny AI — Pino structured logging adapter with secret redaction",
+  "engines": {
+    "node": ">=20"
+  },
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thiny-ai/thiny.git",
+    "directory": "packages/adapters/logger-pino"
+  },
+  "homepage": "https://github.com/thiny-ai/thiny/tree/main/packages/adapters/logger-pino#readme",
+  "bugs": {
+    "url": "https://github.com/thiny-ai/thiny/issues"
+  },
+  "keywords": [
+    "ai-agent",
+    "llm",
+    "thiny",
+    "logger",
+    "pino",
+    "structured-logging"
+  ]
 }

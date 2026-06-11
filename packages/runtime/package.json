@@ -24,6 +24,32 @@
         "types": "./dist/index.d.ts",
         "import": "./dist/index.js"
       }
-    }
-  }
+    },
+    "provenance": true
+  },
+  "license": "MIT",
+  "author": "Thiny AI",
+  "description": "Thiny AI — cron-based scheduler for running autonomous agents on a heartbeat",
+  "engines": {
+    "node": ">=20"
+  },
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thiny-ai/thiny.git",
+    "directory": "packages/runtime"
+  },
+  "homepage": "https://github.com/thiny-ai/thiny/tree/main/packages/runtime#readme",
+  "bugs": {
+    "url": "https://github.com/thiny-ai/thiny/issues"
+  },
+  "keywords": [
+    "ai-agent",
+    "llm",
+    "thiny",
+    "runtime",
+    "cron",
+    "scheduler",
+    "autonomous"
+  ]
 }

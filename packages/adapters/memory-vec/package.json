@@ -24,6 +24,32 @@
         "types": "./dist/index.d.ts",
         "import": "./dist/index.js"
       }
-    }
-  }
+    },
+    "provenance": true
+  },
+  "license": "MIT",
+  "author": "Thiny AI",
+  "description": "Thiny AI — vector memory adapter for semantic search and RAG",
+  "engines": {
+    "node": ">=20"
+  },
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thiny-ai/thiny.git",
+    "directory": "packages/adapters/memory-vec"
+  },
+  "homepage": "https://github.com/thiny-ai/thiny/tree/main/packages/adapters/memory-vec#readme",
+  "bugs": {
+    "url": "https://github.com/thiny-ai/thiny/issues"
+  },
+  "keywords": [
+    "ai-agent",
+    "llm",
+    "thiny",
+    "memory",
+    "vector",
+    "semantic-search",
+    "rag"
+  ]
 }

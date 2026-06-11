@@ -27,6 +27,32 @@
         "types": "./dist/index.d.ts",
         "import": "./dist/index.js"
       }
-    }
-  }
+    },
+    "provenance": true
+  },
+  "license": "MIT",
+  "author": "Thiny AI",
+  "description": "Thiny AI — Vercel AI SDK model adapter for OpenAI, Anthropic, and more",
+  "engines": {
+    "node": ">=20"
+  },
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thiny-ai/thiny.git",
+    "directory": "packages/adapters/model-aisdk"
+  },
+  "homepage": "https://github.com/thiny-ai/thiny/tree/main/packages/adapters/model-aisdk#readme",
+  "bugs": {
+    "url": "https://github.com/thiny-ai/thiny/issues"
+  },
+  "keywords": [
+    "ai-agent",
+    "llm",
+    "thiny",
+    "model",
+    "ai-sdk",
+    "openai",
+    "anthropic"
+  ]
 }

@@ -8,10 +8,15 @@
   },
   "dependencies": {
     "@libsql/client": "*",
+    "@opentelemetry/exporter-trace-otlp-grpc": "^0.218.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.218.0",
+    "@opentelemetry/sdk-node": "^0.218.0",
     "@thiny/core": "workspace:*",
     "@thiny/logger-pino": "workspace:*",
     "@thiny/memory-sqlite": "workspace:*",
     "@thiny/model-aisdk": "workspace:*",
-    "@thiny/plugin-web-search": "workspace:*"
+    "@thiny/otel": "workspace:^",
+    "@thiny/plugin-web-search": "workspace:*",
+    "zod": "^3.23.8"
   }
 }

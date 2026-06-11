@@ -25,6 +25,34 @@
         "types": "./dist/index.d.ts",
         "import": "./dist/index.js"
       }
-    }
-  }
+    },
+    "provenance": true
+  },
+  "license": "MIT",
+  "author": "Thiny AI",
+  "description": "Thiny AI — Solana blockchain plugin with wallet tools, SPL tokens, and transaction safety",
+  "engines": {
+    "node": ">=20"
+  },
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thiny-ai/thiny.git",
+    "directory": "packages/plugins/solana"
+  },
+  "homepage": "https://github.com/thiny-ai/thiny/tree/main/packages/plugins/solana#readme",
+  "bugs": {
+    "url": "https://github.com/thiny-ai/thiny/issues"
+  },
+  "keywords": [
+    "ai-agent",
+    "llm",
+    "thiny",
+    "plugin",
+    "solana",
+    "spl",
+    "wallet",
+    "defi",
+    "web3"
+  ]
 }

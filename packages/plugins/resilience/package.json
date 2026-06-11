@@ -24,6 +24,32 @@
         "types": "./dist/index.d.ts",
         "import": "./dist/index.js"
       }
-    }
-  }
+    },
+    "provenance": true
+  },
+  "license": "MIT",
+  "author": "Thiny AI",
+  "description": "Thiny AI — resilience plugin with rate limiting, retry, and circuit breaking",
+  "engines": {
+    "node": ">=20"
+  },
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thiny-ai/thiny.git",
+    "directory": "packages/plugins/resilience"
+  },
+  "homepage": "https://github.com/thiny-ai/thiny/tree/main/packages/plugins/resilience#readme",
+  "bugs": {
+    "url": "https://github.com/thiny-ai/thiny/issues"
+  },
+  "keywords": [
+    "ai-agent",
+    "llm",
+    "thiny",
+    "plugin",
+    "resilience",
+    "rate-limit",
+    "circuit-breaker"
+  ]
 }

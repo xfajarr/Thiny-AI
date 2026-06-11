@@ -39,6 +39,13 @@ export default defineConfig({
         branches: 80,
         functions: 75,
         lines: 80,
+        // Per-directory: safety middleware must be >=90% branch covered
+        "packages/core/src/middleware/**/*.ts": {
+          branches: 90,
+          functions: 90,
+          lines: 90,
+          statements: 90,
+        },
       },
     },
   },

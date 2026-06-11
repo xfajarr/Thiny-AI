@@ -24,6 +24,32 @@
         "types": "./dist/index.d.ts",
         "import": "./dist/index.js"
       }
-    }
-  }
+    },
+    "provenance": true
+  },
+  "license": "MIT",
+  "author": "Thiny AI",
+  "description": "Thiny AI — user memory plugin for personalized agent context and preferences",
+  "engines": {
+    "node": ">=20"
+  },
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thiny-ai/thiny.git",
+    "directory": "packages/plugins/user-memory"
+  },
+  "homepage": "https://github.com/thiny-ai/thiny/tree/main/packages/plugins/user-memory#readme",
+  "bugs": {
+    "url": "https://github.com/thiny-ai/thiny/issues"
+  },
+  "keywords": [
+    "ai-agent",
+    "llm",
+    "thiny",
+    "plugin",
+    "user-memory",
+    "personalization",
+    "context"
+  ]
 }

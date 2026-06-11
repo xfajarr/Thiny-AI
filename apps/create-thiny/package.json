@@ -1,12 +1,12 @@
 {
   "name": "create-thiny",
-  "version": "0.1.0",
-  "description": "Scaffold a new Thiny AI agent project",
+  "version": "0.1.1",
+  "description": "Scaffold a new Thiny AI agent project with one command",
   "type": "module",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/thiny-ai/thiny",
+    "url": "git+https://github.com/thiny-ai/thiny.git",
     "directory": "apps/create-thiny"
   },
   "bin": {
@@ -19,7 +19,8 @@
     "access": "public",
     "bin": {
       "create-thiny": "./dist/index.js"
-    }
+    },
+    "provenance": true
   },
   "scripts": {
     "build": "tsup"
@@ -27,5 +28,23 @@
   "devDependencies": {
     "tsup": "^8.5.1",
     "typescript": "^5.5.0"
-  }
+  },
+  "author": "Thiny AI",
+  "engines": {
+    "node": ">=20"
+  },
+  "sideEffects": false,
+  "homepage": "https://github.com/thiny-ai/thiny/tree/main/apps/create-thiny#readme",
+  "bugs": {
+    "url": "https://github.com/thiny-ai/thiny/issues"
+  },
+  "keywords": [
+    "ai-agent",
+    "llm",
+    "thiny",
+    "scaffold",
+    "create",
+    "boilerplate",
+    "cli"
+  ]
 }

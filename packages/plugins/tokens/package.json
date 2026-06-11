@@ -25,6 +25,34 @@
         "types": "./dist/index.d.ts",
         "import": "./dist/index.js"
       }
-    }
-  }
+    },
+    "provenance": true
+  },
+  "license": "MIT",
+  "author": "Thiny AI",
+  "description": "Thiny AI — token research plugin for ERC-20 and SPL token metadata and prices",
+  "engines": {
+    "node": ">=20"
+  },
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thiny-ai/thiny.git",
+    "directory": "packages/plugins/tokens"
+  },
+  "homepage": "https://github.com/thiny-ai/thiny/tree/main/packages/plugins/tokens#readme",
+  "bugs": {
+    "url": "https://github.com/thiny-ai/thiny/issues"
+  },
+  "keywords": [
+    "ai-agent",
+    "llm",
+    "thiny",
+    "plugin",
+    "tokens",
+    "erc20",
+    "spl",
+    "defi",
+    "web3"
+  ]
 }

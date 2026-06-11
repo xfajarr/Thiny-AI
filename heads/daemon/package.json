@@ -7,10 +7,13 @@
     "thiny-daemon": "./src/main.ts"
   },
   "dependencies": {
+    "@opentelemetry/exporter-trace-otlp-http": "^0.218.0",
+    "@opentelemetry/sdk-node": "^0.218.0",
     "@thiny/core": "workspace:*",
     "@thiny/logger-pino": "workspace:*",
     "@thiny/memory-sqlite": "workspace:*",
     "@thiny/model-aisdk": "workspace:*",
+    "@thiny/otel": "workspace:^",
     "@thiny/runtime": "workspace:*"
   }
 }
