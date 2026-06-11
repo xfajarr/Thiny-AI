@@ -1,0 +1,11 @@
+# CODEOWNERS — automatically request review from maintainers
+#
+# Order is important; the last matching pattern takes precedence.
+
+* @xfajarr
+
+# Safety-critical paths
+/packages/core/src/middleware/ @xfajarr
+/packages/core/src/approvers.ts @xfajarr
+/packages/core/src/loop.ts @xfajarr
+/docs/security/ @xfajarr

@@ -1,0 +1,33 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "name": "Thiny AI",
+  "entryPoints": [
+    "packages/core/src",
+    "packages/agent/src",
+    "packages/eval/src",
+    "packages/runtime/src",
+    "packages/adapters/model-aisdk/src",
+    "packages/adapters/logger-pino/src",
+    "packages/adapters/memory-sqlite/src",
+    "packages/adapters/signer-viem/src",
+    "packages/adapters/mcp/src",
+    "packages/adapters/otel/src",
+    "packages/plugins/evm/src",
+    "packages/plugins/solana/src",
+    "packages/plugins/web-search/src",
+    "packages/plugins/tokens/src",
+    "packages/plugins/market/src",
+    "packages/plugins/trading-policy/src",
+    "packages/plugins/resilience/src",
+    "packages/plugins/knowledge/src",
+    "packages/plugins/user-memory/src",
+    "packages/plugins/agent-skills/src"
+  ],
+  "entryPointStrategy": "packages",
+  "out": "docs/api",
+  "includeVersion": true,
+  "readme": "README.md",
+  "exclude": ["**/__tests__/**", "**/*.test.ts"],
+  "plugin": [],
+  "githubPages": true
+}
