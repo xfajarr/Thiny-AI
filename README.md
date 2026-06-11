@@ -185,3 +185,13 @@ pnpm lint         # ESLint strict
 ## License
 
 MIT — see [LICENSE](LICENSE)
+
+## Production readiness
+
+Tracked in [`PRODUCTION_READINESS_PLAN.md`](./PRODUCTION_READINESS_PLAN.md) with 14 tickets across 5 milestones.
+
+- **P1 Publishable** — package metadata, READMEs, export validation, provenance
+- **P2 Safe** — hardened HTTP head, secret redaction, threat model
+- **P3 Observable** — OpenTelemetry, health probes
+- **P4 Stable** — API contract, trust-boundary coverage, docs site
+- **P5 Governed** — supply-chain CI, governance docs
