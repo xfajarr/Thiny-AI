@@ -7,7 +7,7 @@
   },
   "dependencies": {
     "@thiny/core": "workspace:*",
-    "ai": "^4.0.0",
+    "ai": "^6.0.202",
     "@ai-sdk/openai": "^3.0.67",
     "@ai-sdk/anthropic": "^1.0.0",
     "pino": "^9.2.0"
